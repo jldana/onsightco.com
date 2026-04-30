@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Site Services — Jacob's Ladder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:       #1A2E28;
+      --soil:      #2C4A40;
+      --moss:      #3A6B58;
+      --sage:      #568C74;
+      --lichen:    #88B8A0;
+      --stone:     #5A8070;
+      --cream:     #E6F2ED;
+      --parchment: #D4EAE2;
+      --sand:      #BED8CE;
+      --white:     #F0FAF6;
+      --slate:     #1E2E3A;
+      --steel:     #2E4A5A;
+      --sky:       #4A8AAA;
+      --sky-lt:    #6AAAC8;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--ink); overflow-x: hidden; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 4rem;
+      background: rgba(240,250,246,0.96); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--sand);
+    }
+    .nav-logo { font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 600; color: var(--ink); text-decoration: none; display: block; line-height: 1.3; }
+    .nav-logo span { display: block; font-size: 0.68rem; font-weight: 400; color: var(--stone); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 1px; }
+    .nav-links { display: flex; gap: 2.2rem; list-style: none; }
+    .nav-links a { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--moss); }
+
+    /* PAGE HEADER */
+    .page-header {
+      min-height: 60vh; padding: 9rem 6rem 6rem;
+      background: var(--slate);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+      position: relative; overflow: hidden;
+    }
+    .page-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(74,138,170,0.04) 0px, rgba(74,138,170,0.04) 1px,
+        transparent 1px, transparent 60px
+      ),
+      repeating-linear-gradient(
+        0deg,
+        rgba(74,138,170,0.04) 0px, rgba(74,138,170,0.04) 1px,
+        transparent 1px, transparent 60px
+      );
+    }
+    .page-eyebrow { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--sky-lt); margin-bottom: 1rem; opacity: 0; animation: fadeUp 0.6s 0.1s forwards; position: relative; }
+    .page-title { font-family: 'Outfit', sans-serif; font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 700; color: #fff; line-height: 1.08; margin-bottom: 1.4rem; opacity: 0; animation: fadeUp 0.6s 0.25s forwards; position: relative; }
+    .page-title span { color: var(--sky-lt); }
+    .page-intro { font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.65); line-height: 1.8; opacity: 0; animation: fadeUp 0.6s 0.4s forwards; position: relative; }
+    .header-stat-box { opacity: 0; animation: fadeUp 0.6s 0.5s forwards; position: relative; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); }
+    .stat-item { background: rgba(30,46,58,0.8); padding: 1.8rem 2rem; }
+    .stat-num { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 700; color: var(--sky-lt); line-height: 1; margin-bottom: 0.3rem; }
+    .stat-label { font-size: 0.7rem; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+
+    /* BUTTONS */
+    .btn-primary { display: inline-block; padding: 0.8rem 2rem; background: var(--moss); color: #fff; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+    .btn-primary:hover { background: var(--sage); transform: translateY(-1px); }
+    .btn-sky { display: inline-block; padding: 0.8rem 2rem; background: var(--sky); color: #fff; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: background 0.2s, transform 0.15s; }
+    .btn-sky:hover { background: var(--sky-lt); transform: translateY(-1px); }
+    .btn-outline-dark { display: inline-block; padding: 0.8rem 2rem; background: transparent; color: #fff; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; border: 1px solid rgba(255,255,255,0.4); white-space: nowrap; flex-shrink: 0; transition: border-color 0.2s, background 0.2s; }
+    .btn-outline-dark:hover { border-color: #fff; background: rgba(255,255,255,0.08); }
+
+    /* DRONE SECTION */
+    .drone-section { padding: 5rem 6rem; background: var(--white); }
+    .section-label { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--stone); margin-bottom: 2.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--sand); }
+    .drone-section .section-label { color: var(--sky); border-color: rgba(74,138,170,0.25); }
+    .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .service-tile { background: var(--cream); border: 1px solid var(--sand); padding: 2rem 2.2rem; cursor: pointer; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+    .service-tile:hover { border-color: var(--moss); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(26,46,40,0.08); }
+    .service-tile.sky:hover { border-color: var(--sky); }
+    .tile-icon { font-size: 1.5rem; margin-bottom: 1rem; display: block; }
+    .tile-title { font-family: 'Outfit', sans-serif; font-size: 1.05rem; font-weight: 600; color: var(--ink); margin-bottom: 0.6rem; }
+    .tile-desc { font-size: 0.88rem; font-weight: 300; color: var(--soil); line-height: 1.75; margin-bottom: 1rem; }
+    .tile-click-hint { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sky); display: block; opacity: 0; transition: opacity 0.2s; }
+    .service-tile:hover .tile-click-hint { opacity: 1; }
+
+    /* GALLERY */
+    .gallery-wrap { position: relative; background: var(--slate); overflow: hidden; }
+    .gallery-track-outer { overflow: hidden; }
+    .gallery-track { display: flex; }
+    .gallery-slide { min-width: 40vw; height: 320px; flex-shrink: 0; background: var(--steel); border-right: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; cursor: pointer; }
+    .gallery-slide-bg { position: absolute; inset: 0; background: repeating-linear-gradient(45deg, rgba(74,138,170,0.05) 0px, rgba(74,138,170,0.05) 1px, transparent 1px, transparent 14px); }
+    .gallery-slide-label { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.15); padding: 0.4rem 1rem; background: rgba(30,46,58,0.7); position: relative; z-index: 1; }
+    .gallery-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(30,46,58,0.8); border: 1px solid rgba(255,255,255,0.15); color: #fff; width: 2.8rem; height: 2.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: background 0.2s; backdrop-filter: blur(4px); }
+    .gallery-btn:hover { background: rgba(74,138,170,0.7); }
+    .gallery-btn.prev { left: 1.5rem; }
+    .gallery-btn.next { right: 1.5rem; }
+    .gallery-dots { display: flex; justify-content: center; gap: 0.5rem; padding: 1rem 0; background: var(--slate); }
+    .gallery-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: background 0.2s; border: none; }
+    .gallery-dot.active { background: var(--sky-lt); }
+
+    /* SITE ASSESSMENT SECTION */
+    .assessment-section { padding: 5rem 6rem; background: var(--cream); border-top: 1px solid var(--sand); border-bottom: 1px solid var(--sand); }
+    .assessment-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+    .assessment-tile { background: var(--white); border: 1px solid var(--sand); padding: 2rem 2.2rem; cursor: pointer; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+    .assessment-tile:hover { border-color: var(--moss); transform: translateY(-2px); box-shadow: 0 4px 20px rgba(26,46,40,0.08); }
+    .assessment-tile:hover .tile-click-hint { opacity: 1; color: var(--moss); }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; z-index: 500; background: rgba(26,46,40,0.75); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 2rem; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: var(--white); max-width: 680px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; transform: translateY(20px); transition: transform 0.25s; }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-close { position: absolute; top: 1rem; right: 1rem; background: var(--sand); border: none; color: var(--ink); width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1rem; transition: background 0.2s; z-index: 10; }
+    .modal-close:hover { background: var(--moss); color: #fff; }
+    .modal-body { padding: 2.2rem 2.5rem 1.8rem; }
+    .modal-icon { font-size: 1.8rem; margin-bottom: 0.8rem; display: block; }
+    .modal-title { font-family: 'Outfit', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--ink); margin-bottom: 1rem; }
+    .modal-desc { font-size: 0.95rem; font-weight: 300; color: var(--soil); line-height: 1.85; margin-bottom: 1.5rem; }
+    .modal-img-wrap { width: 100%; line-height: 0; margin: 0 0 1.8rem; }
+    .modal-img-wrap img { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+
+    /* CTA */
+    .cta-section { background: var(--slate); padding: 4.5rem 6rem; display: flex; align-items: center; justify-content: space-between; gap: 3rem; }
+    .cta-title { font-family: 'Outfit', sans-serif; font-size: clamp(1.5rem, 2.5vw, 2rem); font-weight: 700; color: #fff; margin-bottom: 0.5rem; }
+    .cta-sub { font-size: 0.95rem; font-weight: 300; color: rgba(255,255,255,0.6); }
+
+    /* FOOTER */
+    footer { background: var(--ink); padding: 2.2rem 6rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.06); }
+    .footer-logo { font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--cream); text-decoration: none; }
+    .footer-logo span { display: block; font-size: 0.63rem; font-weight: 300; color: var(--stone); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+    .footer-tagline { font-size: 0.82rem; font-weight: 300; color: rgba(200,220,210,0.4); }
+    .footer-links { display: flex; gap: 1.8rem; list-style: none; }
+    .footer-links a { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(200,220,210,0.4); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--lichen); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1.2rem; }
+      .page-header { grid-template-columns: 1fr; padding: 7rem 2rem 3rem; gap: 2rem; }
+      .drone-section, .assessment-section { padding: 3rem 2rem; }
+      .services-grid, .assessment-grid { grid-template-columns: 1fr; }
+      .cta-section { flex-direction: column; padding: 3rem 2rem; text-align: center; }
+      footer { flex-direction: column; gap: 1.2rem; padding: 2rem 1.5rem; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Jacob's Ladder<span>Building, Home &amp; Site Services</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html#services" class="active">Services</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <section class="page-header">
+    <div>
+      <p class="page-eyebrow">Services / Site</p>
+      <h1 class="page-title">Site<br><span>Services</span></h1>
+      <p class="page-intro">Drone inspection, measurement, and site assessment for homeowners and property managers. Precise data from difficult terrain, delivered clearly and professionally.</p>
+    </div>
+    <div class="header-stat-box">
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="stat-num">FAA</div>
+          <div class="stat-label">Part 107 Certified</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">Arctic</div>
+          <div class="stat-label">to Patagonia</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">CO</div>
+          <div class="stat-label">Fall, Winter &amp; Spring</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">WA</div>
+          <div class="stat-label">Bellingham Summers</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DRONE SERVICES -->
+  <section class="drone-section" id="drone">
+    <div class="section-label">Drone Inspection &amp; Measurement</div>
+    <div class="services-grid">
+
+      <div class="service-tile sky" onclick="openModal(0)">
+        <span class="tile-icon">&#127968;</span>
+        <div class="tile-title">Roof &amp; Structure Inspection</div>
+        <p class="tile-desc">Close-up aerial inspection of roofs, chimneys, gutters, and exterior structures without ladders or scaffolding. Delivered with annotated photos.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+      <div class="service-tile sky" onclick="openModal(1)">
+        <span class="tile-icon">&#128207;</span>
+        <div class="tile-title">Property &amp; Land Measurement</div>
+        <p class="tile-desc">Accurate aerial measurement of lots, structures, terrain features, and vegetation coverage. Useful for planning, permitting, and insurance.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+      <div class="service-tile sky" onclick="openModal(2)">
+        <span class="tile-icon">&#128247;</span>
+        <div class="tile-title">Progress Documentation</div>
+        <p class="tile-desc">Scheduled aerial documentation of construction or landscaping projects. Timestamped photo and video records for your files or contractor accountability.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+      <div class="service-tile sky" onclick="openModal(3)">
+        <span class="tile-icon">&#127968;</span>
+        <div class="tile-title">Real Estate &amp; Pre-Listing Inspection</div>
+        <p class="tile-desc">Comprehensive aerial inspection before listing or purchasing — identifying deferred maintenance, roof wear, drainage issues, and site conditions.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+      <div class="service-tile sky" onclick="openModal(4)">
+        <span class="tile-icon">&#128247;</span>
+        <div class="tile-title">Aerial Photography &amp; Videography</div>
+        <p class="tile-desc">High-resolution aerial imagery for real estate marketing, property records, or personal documentation. Delivered in print and web-ready formats.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+      <div class="service-tile sky" onclick="openModal(5)">
+        <span class="tile-icon">&#127959;</span>
+        <div class="tile-title">Infrastructure Inspection</div>
+        <p class="tile-desc">Aerial inspection of bridges, retaining walls, towers, and other structures in difficult or high-risk access environments. Experienced in remote and complex terrain.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <div class="gallery-wrap">
+    <div class="gallery-track-outer">
+      <div class="gallery-track" id="galleryTrack">
+        <div class="gallery-slide" data-index="0"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Roof &amp; Structure Inspection</span></div>
+        <div class="gallery-slide" data-index="1"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Property &amp; Land Measurement</span></div>
+        <div class="gallery-slide" data-index="2"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Progress Documentation</span></div>
+        <div class="gallery-slide" data-index="3"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Real Estate Inspection</span></div>
+        <div class="gallery-slide" data-index="4"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Aerial Photography</span></div>
+        <div class="gallery-slide" data-index="5"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Infrastructure Inspection</span></div>
+        <div class="gallery-slide" data-index="6"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Site Prep Consultation</span></div>
+        <div class="gallery-slide" data-index="7"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Access &amp; Road Assessment</span></div>
+        <div class="gallery-slide" data-index="8"><div class="gallery-slide-bg"></div><span class="gallery-slide-label">Fire Mitigation Planning</span></div>
+      </div>
+    </div>
+    <button class="gallery-btn prev" onclick="galleryMove(-1)">&#8592;</button>
+    <button class="gallery-btn next" onclick="galleryMove(1)">&#8594;</button>
+    <div class="gallery-dots" id="galleryDots"></div>
+  </div>
+
+  <!-- SITE ASSESSMENT -->
+  <section class="assessment-section" id="assessment">
+    <div class="section-label">Site Assessment &amp; Planning</div>
+    <div class="assessment-grid">
+
+      <div class="assessment-tile" onclick="openModal(6)">
+        <span class="tile-icon">&#129497;</span>
+        <div class="tile-title">Site Prep Consultation</div>
+        <p class="tile-desc">On-site assessment before a build, landscape project, or major renovation — identifying grading needs, drainage concerns, and access considerations.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+      <div class="assessment-tile" onclick="openModal(7)">
+        <span class="tile-icon">&#128739;</span>
+        <div class="tile-title">Access &amp; Road Assessment</div>
+        <p class="tile-desc">Evaluation of driveways, access roads, and site entry points for condition, drainage, and load-bearing capacity. Useful before deliveries, builds, or heavy equipment access.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+      <div class="assessment-tile" onclick="openModal(8)">
+        <span class="tile-icon">&#128293;</span>
+        <div class="tile-title">Fire Mitigation Planning</div>
+        <p class="tile-desc">Drone-assisted property assessment for fire risk — mapping fuel zones, defensible space opportunities, and access routes. Delivered as a written plan you can act on or share with contractors.</p>
+        <span class="tile-click-hint">See photos &#8594;</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">&#10005;</button>
+      <div class="modal-body">
+        <span class="modal-icon" id="modalIcon"></span>
+        <div class="modal-title" id="modalTitle"></div>
+        <p class="modal-desc" id="modalDesc"></p>
+        <div class="modal-img-wrap">
+          <img id="modalImage" src="" alt="" />
+        </div>
+        <a href="contact.html" class="btn-primary">Request a Consultation</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div>
+      <h2 class="cta-title">Need a site assessment or drone inspection?</h2>
+      <p class="cta-sub">Boulder fall through spring &mdash; Bellingham in summer.</p>
+    </div>
+    <a href="contact.html" class="btn-outline-dark">Get in Touch</a>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <a href="index.html" class="footer-logo">Jacob's Ladder<span>Building, Home &amp; Site Services</span></a>
+    <div class="footer-tagline">Precise work — Every job. Every site. Every time.</div>
+    <ul class="footer-links">
+      <li><a href="building-services.html">Building</a></li>
+      <li><a href="home-services.html">Home</a></li>
+      <li><a href="site-services.html">Site</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </footer>
+
+  <script>
+    var services = [
+      { icon: '&#127968;', title: 'Roof & Structure Inspection',       img: 'images/roof-inspection.jpg',  desc: 'Close-up aerial inspection of roofs, chimneys, gutters, and exterior structures without ladders or scaffolding. We document condition, flag areas of concern, and deliver annotated photos you can share with contractors or insurance.' },
+      { icon: '&#128207;', title: 'Property & Land Measurement',       img: 'images/land-measurement.jpg', desc: 'Accurate aerial measurement of lots, structures, terrain features, and vegetation coverage. Useful for planning, permitting, insurance claims, and understanding your property before a major project.' },
+      { icon: '&#128247;', title: 'Progress Documentation',            img: 'images/progress-doc.jpg',     desc: 'Scheduled aerial documentation of construction or landscaping projects from start to finish. Timestamped photo and video records give you a clear timeline and help with contractor accountability.' },
+      { icon: '&#127968;', title: 'Real Estate & Pre-Listing Inspection', img: 'images/real-estate.jpg',  desc: 'Comprehensive aerial inspection before listing or purchasing a property. We identify deferred maintenance, roof wear, drainage issues, and site conditions that affect value or negotiation.' },
+      { icon: '&#128247;', title: 'Aerial Photography & Videography',  img: 'images/aerial-photo.jpg',    desc: 'High-resolution aerial imagery for real estate marketing, property records, or personal documentation. Delivered in print and web-ready formats, with editing and annotation available on request.' },
+      { icon: '&#127959;', title: 'Infrastructure Inspection',         img: 'images/infrastructure.jpg',  desc: 'Aerial inspection of bridges, retaining walls, towers, and other structures in difficult or high-risk access environments. Experienced operating in remote, complex, and technically demanding terrain from the Arctic to Patagonia.' },
+      { icon: '&#129497;', title: 'Site Prep Consultation',            img: 'images/site-prep.jpg',       desc: 'On-site assessment before a build, landscape project, or major renovation. We identify grading needs, drainage concerns, soil conditions, and access considerations so you can plan and budget accurately.' },
+      { icon: '&#128739;', title: 'Access & Road Assessment',          img: 'images/road-assessment.jpg', desc: 'Evaluation of driveways, access roads, and site entry points for condition, drainage, and load-bearing capacity. Particularly useful before major deliveries, construction equipment access, or road improvement projects.' },
+      { icon: '&#128293;', title: 'Fire Mitigation Planning',          img: 'images/fire-planning.jpg',   desc: 'Drone-assisted property assessment for fire risk, mapping fuel zones, defensible space opportunities, and evacuation and access routes. Delivered as a clear written plan you can act on yourself or share with tree care and landscaping contractors.' },
+    ];
+
+    var overlay = document.getElementById('modalOverlay');
+
+    window.openModal = function(i) {
+      var s = services[i];
+      document.getElementById('modalIcon').innerHTML   = s.icon;
+      document.getElementById('modalTitle').textContent = s.title;
+      document.getElementById('modalDesc').textContent  = s.desc;
+      var img = document.getElementById('modalImage');
+      img.src = s.img;
+      img.alt = s.title;
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    function closeModal() {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.getElementById('modalClose').addEventListener('click', closeModal);
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) closeModal(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+    (function() {
+      var track    = document.getElementById('galleryTrack');
+      var dotsEl   = document.getElementById('galleryDots');
+      var originals = Array.from(track.children);
+      var N = originals.length;
+
+      originals.slice().reverse().forEach(function(s) { track.insertBefore(s.cloneNode(true), track.firstChild); });
+      originals.forEach(function(s) { track.appendChild(s.cloneNode(true)); });
+
+      var pos = N;
+      function slideW() { return track.children[0].offsetWidth; }
+
+      function render(animate) {
+        track.style.transition = animate ? 'transform 0.38s cubic-bezier(0.4,0,0.2,1)' : 'none';
+        track.style.transform  = 'translateX(-' + (pos * slideW()) + 'px)';
+        var dotIdx = ((pos - N) % N + N) % N;
+        document.querySelectorAll('.gallery-dot').forEach(function(d, i) { d.classList.toggle('active', i === dotIdx); });
+      }
+
+      track.addEventListener('transitionend', function() {
+        if (pos <= 0)        { pos += N; render(false); }
+        else if (pos >= N*2) { pos -= N; render(false); }
+      });
+
+      window.galleryMove = function(dir) { pos += dir; render(true); };
+
+      originals.forEach(function(_, i) {
+        var d = document.createElement('button');
+        d.className = 'gallery-dot' + (i === 0 ? ' active' : '');
+        d.addEventListener('click', (function(idx) { return function() { pos = N + idx; render(true); }; })(i));
+        dotsEl.appendChild(d);
+      });
+
+      track.addEventListener('click', function(e) {
+        var slide = e.target.closest('.gallery-slide');
+        if (slide && slide.dataset.index !== undefined) { window.openModal(parseInt(slide.dataset.index)); }
+      });
+
+      window.addEventListener('resize', function() { render(false); });
+      render(false);
+    })();
+  </script>
+
+</body>
+</html>
