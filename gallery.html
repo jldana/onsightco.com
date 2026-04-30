@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gallery — Onsight</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:       #1A2E28;
+      --soil:      #2C4A40;
+      --moss:      #3A6B58;
+      --sage:      #568C74;
+      --lichen:    #88B8A0;
+      --stone:     #5A8070;
+      --cream:     #E6F2ED;
+      --parchment: #D4EAE2;
+      --sand:      #BED8CE;
+      --white:     #F0FAF6;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--white); color: var(--ink); overflow-x: hidden; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.1rem 4rem;
+      background: rgba(240,250,246,0.96); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--sand);
+    }
+    .nav-logo { font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 600; color: var(--ink); text-decoration: none; display: block; line-height: 1.3; }
+    .nav-logo span { display: block; font-size: 0.68rem; font-weight: 400; color: var(--stone); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 1px; }
+    .nav-links { display: flex; gap: 2.2rem; list-style: none; }
+    .nav-links a { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--moss); }
+
+    /* PAGE HEADER */
+    .page-header {
+      padding: 9rem 6rem 4rem;
+      background: var(--cream);
+      border-bottom: 1px solid var(--sand);
+    }
+    .page-eyebrow { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--moss); margin-bottom: 1rem; opacity: 0; animation: fadeUp 0.6s 0.1s forwards; }
+    .page-title { font-family: 'Outfit', sans-serif; font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 700; color: var(--ink); line-height: 1.08; margin-bottom: 1.2rem; opacity: 0; animation: fadeUp 0.6s 0.25s forwards; }
+    .page-intro { font-size: 1rem; font-weight: 300; color: var(--soil); line-height: 1.8; max-width: 560px; opacity: 0; animation: fadeUp 0.6s 0.4s forwards; }
+
+    /* FILTER TABS */
+    .filter-bar {
+      padding: 2rem 6rem;
+      background: var(--white);
+      border-bottom: 1px solid var(--sand);
+      display: flex; gap: 0.6rem; flex-wrap: wrap; align-items: center;
+    }
+    .filter-label { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--stone); margin-right: 0.8rem; }
+    .filter-btn {
+      font-family: 'DM Sans', sans-serif; font-size: 0.75rem; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.5rem 1.2rem; border: 1px solid var(--sand);
+      background: transparent; color: var(--stone); cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .filter-btn:hover { border-color: var(--moss); color: var(--moss); }
+    .filter-btn.active { background: var(--moss); border-color: var(--moss); color: #fff; }
+
+    /* FEATURED */
+    .featured-section {
+      padding: 4rem 6rem 3rem;
+      background: var(--white);
+    }
+    .section-label { font-size: 0.68rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--stone); margin-bottom: 1.8rem; padding-bottom: 1rem; border-bottom: 1px solid var(--sand); }
+    .featured-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      grid-template-rows: 280px 280px;
+      gap: 0.75rem;
+    }
+    .featured-item {
+      background: var(--parchment);
+      position: relative; overflow: hidden; cursor: pointer;
+    }
+    .featured-item:first-child { grid-row: 1 / 3; }
+    .featured-item-bg {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(45deg, rgba(58,107,88,0.05) 0px, rgba(58,107,88,0.05) 1px, transparent 1px, transparent 14px);
+      transition: opacity 0.3s;
+    }
+    .featured-item img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .featured-item:hover img { transform: scale(1.04); }
+    .featured-item-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(26,46,40,0.7) 0%, transparent 50%);
+      opacity: 0; transition: opacity 0.3s;
+      display: flex; align-items: flex-end; padding: 1.5rem;
+    }
+    .featured-item:hover .featured-item-overlay { opacity: 1; }
+    .featured-item-label {
+      font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #fff;
+    }
+    .featured-placeholder {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .placeholder-tag { font-size: 0.68rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--stone); border: 1px solid var(--sand); padding: 0.4rem 1rem; background: rgba(240,250,246,0.8); }
+
+    /* GRID */
+    .grid-section {
+      padding: 0 6rem 5rem;
+      background: var(--white);
+    }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+    .grid-item {
+      background: var(--parchment);
+      aspect-ratio: 4/3;
+      position: relative; overflow: hidden; cursor: pointer;
+    }
+    .grid-item img {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .grid-item:hover img { transform: scale(1.04); }
+    .grid-item-bg {
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(45deg, rgba(58,107,88,0.05) 0px, rgba(58,107,88,0.05) 1px, transparent 1px, transparent 14px);
+    }
+    .grid-item-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(26,46,40,0.65) 0%, transparent 55%);
+      opacity: 0; transition: opacity 0.3s;
+      display: flex; align-items: flex-end; padding: 1rem 1.2rem;
+    }
+    .grid-item:hover .grid-item-overlay { opacity: 1; }
+    .grid-item-label { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; }
+    .grid-item-category { font-size: 0.62rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lichen); margin-top: 0.15rem; }
+    .grid-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+
+    /* LIGHTBOX */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(16,28,22,0.95); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s;
+    }
+    .lightbox.open { opacity: 1; pointer-events: all; }
+    .lightbox-inner {
+      position: relative; max-width: 90vw; max-height: 90vh;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .lightbox-img-wrap {
+      max-width: 80vw; max-height: 75vh;
+      background: var(--parchment);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .lightbox-img-wrap img { max-width: 80vw; max-height: 75vh; object-fit: contain; display: block; }
+    .lightbox-placeholder { width: 70vw; height: 55vh; display: flex; align-items: center; justify-content: center; background: var(--parchment); }
+    .lightbox-caption {
+      margin-top: 1.2rem; text-align: center;
+    }
+    .lightbox-caption-title { font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 0.2rem; }
+    .lightbox-caption-cat { font-size: 0.7rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lichen); }
+    .lightbox-close {
+      position: absolute; top: -1rem; right: -1rem;
+      background: var(--moss); border: none; color: #fff;
+      width: 2.4rem; height: 2.4rem; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1rem; transition: background 0.2s; z-index: 10;
+    }
+    .lightbox-close:hover { background: var(--sage); }
+    .lightbox-prev, .lightbox-next {
+      position: fixed; top: 50%; transform: translateY(-50%);
+      background: rgba(26,46,40,0.7); border: 1px solid rgba(255,255,255,0.15);
+      color: #fff; width: 3rem; height: 3rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.1rem; transition: background 0.2s;
+      z-index: 10;
+    }
+    .lightbox-prev:hover, .lightbox-next:hover { background: var(--moss); }
+    .lightbox-prev { left: 1.5rem; }
+    .lightbox-next { right: 1.5rem; }
+    .lightbox-counter { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); font-size: 0.72rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+
+    /* FOOTER */
+    footer { background: var(--ink); padding: 2.2rem 6rem; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid rgba(255,255,255,0.06); }
+    .footer-logo { font-family: 'Outfit', sans-serif; font-size: 0.95rem; font-weight: 600; color: var(--cream); text-decoration: none; }
+    .footer-logo span { display: block; font-size: 0.63rem; font-weight: 300; color: var(--stone); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+    .footer-tagline { font-size: 0.82rem; font-weight: 300; color: rgba(200,220,210,0.4); }
+    .footer-links { display: flex; gap: 1.8rem; list-style: none; }
+    .footer-links a { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(200,220,210,0.4); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--lichen); }
+
+    .hidden { display: none !important; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 900px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { gap: 1rem; }
+      .page-header { padding: 7rem 2rem 3rem; }
+      .filter-bar { padding: 1.5rem 2rem; }
+      .featured-section { padding: 3rem 2rem 2rem; }
+      .featured-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto; }
+      .featured-item:first-child { grid-row: auto; grid-column: 1 / 3; height: 240px; }
+      .grid-section { padding: 0 2rem 3rem; }
+      .photo-grid { grid-template-columns: 1fr 1fr; }
+      footer { flex-direction: column; gap: 1.2rem; padding: 2rem 1.5rem; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">Onsight<span>Building, Home &amp; Site Services</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html#services">Services</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="gallery.html" class="active">Gallery</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HEADER -->
+  <section class="page-header">
+    <p class="page-eyebrow">Our Work</p>
+    <h1 class="page-title">Gallery</h1>
+    <p class="page-intro">A selection of completed projects across building, home, and site services in Boulder, CO and Bellingham, WA.</p>
+  </section>
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-btn active" onclick="filterGallery('all', this)">All</button>
+    <button class="filter-btn" onclick="filterGallery('building', this)">Building</button>
+    <button class="filter-btn" onclick="filterGallery('home', this)">Home &amp; Tree Care</button>
+    <button class="filter-btn" onclick="filterGallery('site', this)">Site &amp; Drone</button>
+  </div>
+
+  <!-- FEATURED -->
+  <section class="featured-section">
+    <div class="section-label">Featured Work</div>
+    <div class="featured-grid" id="featuredGrid">
+      <div class="featured-item" data-category="building" data-index="0" onclick="openLightbox(0)">
+        <div class="featured-item-bg"></div>
+        <div class="featured-placeholder"><span class="placeholder-tag">Featured Photo 1</span></div>
+        <div class="featured-item-overlay"><span class="featured-item-label">Kitchen Remodel</span></div>
+      </div>
+      <div class="featured-item" data-category="site" data-index="1" onclick="openLightbox(1)">
+        <div class="featured-item-bg"></div>
+        <div class="featured-placeholder"><span class="placeholder-tag">Featured Photo 2</span></div>
+        <div class="featured-item-overlay"><span class="featured-item-label">Aerial Survey</span></div>
+      </div>
+      <div class="featured-item" data-category="home" data-index="2" onclick="openLightbox(2)">
+        <div class="featured-item-bg"></div>
+        <div class="featured-placeholder"><span class="placeholder-tag">Featured Photo 3</span></div>
+        <div class="featured-item-overlay"><span class="featured-item-label">Tree Removal</span></div>
+      </div>
+      <div class="featured-item" data-category="building" data-index="3" onclick="openLightbox(3)">
+        <div class="featured-item-bg"></div>
+        <div class="featured-placeholder"><span class="placeholder-tag">Featured Photo 4</span></div>
+        <div class="featured-item-overlay"><span class="featured-item-label">Deck Build</span></div>
+      </div>
+      <div class="featured-item" data-category="site" data-index="4" onclick="openLightbox(4)">
+        <div class="featured-item-bg"></div>
+        <div class="featured-placeholder"><span class="placeholder-tag">Featured Photo 5</span></div>
+        <div class="featured-item-overlay"><span class="featured-item-label">Roof Inspection</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GRID -->
+  <section class="grid-section">
+    <div class="section-label">All Projects</div>
+    <div class="photo-grid" id="photoGrid">
+
+      <div class="grid-item" data-category="building" data-index="5" onclick="openLightbox(5)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Window Replacement</div><div class="grid-item-category">Building</div></div></div>
+      </div>
+      <div class="grid-item" data-category="building" data-index="6" onclick="openLightbox(6)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Bathroom Remodel</div><div class="grid-item-category">Building</div></div></div>
+      </div>
+      <div class="grid-item" data-category="building" data-index="7" onclick="openLightbox(7)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Siding</div><div class="grid-item-category">Building</div></div></div>
+      </div>
+      <div class="grid-item" data-category="building" data-index="8" onclick="openLightbox(8)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Garden Stairs</div><div class="grid-item-category">Building</div></div></div>
+      </div>
+      <div class="grid-item" data-category="building" data-index="9" onclick="openLightbox(9)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Flooring</div><div class="grid-item-category">Building</div></div></div>
+      </div>
+      <div class="grid-item" data-category="building" data-index="10" onclick="openLightbox(10)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Shed Build</div><div class="grid-item-category">Building</div></div></div>
+      </div>
+      <div class="grid-item" data-category="home" data-index="11" onclick="openLightbox(11)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Crown Reduction</div><div class="grid-item-category">Home &amp; Tree Care</div></div></div>
+      </div>
+      <div class="grid-item" data-category="home" data-index="12" onclick="openLightbox(12)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Stump Grinding</div><div class="grid-item-category">Home &amp; Tree Care</div></div></div>
+      </div>
+      <div class="grid-item" data-category="home" data-index="13" onclick="openLightbox(13)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Fire Mitigation</div><div class="grid-item-category">Home &amp; Tree Care</div></div></div>
+      </div>
+      <div class="grid-item" data-category="home" data-index="14" onclick="openLightbox(14)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Storm Damage</div><div class="grid-item-category">Home &amp; Tree Care</div></div></div>
+      </div>
+      <div class="grid-item" data-category="site" data-index="15" onclick="openLightbox(15)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Property Measurement</div><div class="grid-item-category">Site &amp; Drone</div></div></div>
+      </div>
+      <div class="grid-item" data-category="site" data-index="16" onclick="openLightbox(16)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Infrastructure Inspection</div><div class="grid-item-category">Site &amp; Drone</div></div></div>
+      </div>
+      <div class="grid-item" data-category="site" data-index="17" onclick="openLightbox(17)">
+        <div class="grid-item-bg"></div>
+        <div class="grid-placeholder"><span class="placeholder-tag">Photo</span></div>
+        <div class="grid-item-overlay"><div><div class="grid-item-label">Progress Documentation</div><div class="grid-item-category">Site &amp; Drone</div></div></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- LIGHTBOX -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-inner">
+      <button class="lightbox-close" id="lightboxClose">&#10005;</button>
+      <div class="lightbox-img-wrap" id="lightboxImgWrap">
+        <div class="lightbox-placeholder" id="lightboxPlaceholder">
+          <span class="placeholder-tag" id="lightboxPlaceholderLabel">Photo</span>
+        </div>
+        <img id="lightboxImg" src="" alt="" style="display:none;" />
+      </div>
+      <div class="lightbox-caption">
+        <div class="lightbox-caption-title" id="lightboxTitle"></div>
+        <div class="lightbox-caption-cat" id="lightboxCat"></div>
+      </div>
+    </div>
+    <button class="lightbox-prev" id="lightboxPrev">&#8592;</button>
+    <button class="lightbox-next" id="lightboxNext">&#8594;</button>
+    <div class="lightbox-counter" id="lightboxCounter"></div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <a href="index.html" class="footer-logo">Onsight<span>Building, Home &amp; Site Services</span></a>
+    <div class="footer-tagline">Precise work — Every job. Every site. Every time.</div>
+    <ul class="footer-links">
+      <li><a href="building-services.html">Building</a></li>
+      <li><a href="home-services.html">Home</a></li>
+      <li><a href="site-services.html">Site</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </footer>
+
+  <script>
+    var photos = [
+      { title: 'Kitchen Remodel',         category: 'Building',          img: 'images/gallery/kitchen-featured.jpg' },
+      { title: 'Aerial Survey',            category: 'Site & Drone',      img: 'images/gallery/aerial-featured.jpg' },
+      { title: 'Tree Removal',             category: 'Home & Tree Care',  img: 'images/gallery/tree-removal-featured.jpg' },
+      { title: 'Deck Build',               category: 'Building',          img: 'images/gallery/deck-featured.jpg' },
+      { title: 'Roof Inspection',          category: 'Site & Drone',      img: 'images/gallery/roof-featured.jpg' },
+      { title: 'Window Replacement',       category: 'Building',          img: 'images/gallery/windows.jpg' },
+      { title: 'Bathroom Remodel',         category: 'Building',          img: 'images/gallery/bathroom.jpg' },
+      { title: 'Siding',                   category: 'Building',          img: 'images/gallery/siding.jpg' },
+      { title: 'Garden Stairs',            category: 'Building',          img: 'images/IMG_1973.jpg' },
+      { title: 'Flooring',                 category: 'Building',          img: 'images/gallery/flooring.jpg' },
+      { title: 'Shed Build',               category: 'Building',          img: 'images/gallery/shed.jpg' },
+      { title: 'Crown Reduction',          category: 'Home & Tree Care',  img: 'images/gallery/crown.jpg' },
+      { title: 'Stump Grinding',           category: 'Home & Tree Care',  img: 'images/gallery/stump.jpg' },
+      { title: 'Fire Mitigation',          category: 'Home & Tree Care',  img: 'images/gallery/fire-mitigation.jpg' },
+      { title: 'Storm Damage Response',    category: 'Home & Tree Care',  img: 'images/gallery/storm.jpg' },
+      { title: 'Property Measurement',     category: 'Site & Drone',      img: 'images/gallery/measurement.jpg' },
+      { title: 'Infrastructure Inspection',category: 'Site & Drone',      img: 'images/gallery/infrastructure.jpg' },
+      { title: 'Progress Documentation',   category: 'Site & Drone',      img: 'images/gallery/progress.jpg' },
+    ];
+
+    var currentIndex = 0;
+    var visibleIndices = photos.map(function(_, i) { return i; });
+
+    // FILTER
+    window.filterGallery = function(cat, btn) {
+      document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
+      var allItems = document.querySelectorAll('.featured-item, .grid-item');
+      allItems.forEach(function(item) {
+        if (cat === 'all' || item.dataset.category === cat) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+
+      visibleIndices = [];
+      allItems.forEach(function(item) {
+        if (!item.classList.contains('hidden')) {
+          visibleIndices.push(parseInt(item.dataset.index));
+        }
+      });
+    };
+
+    // LIGHTBOX
+    window.openLightbox = function(index) {
+      currentIndex = index;
+      renderLightbox();
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function renderLightbox() {
+      var p = photos[currentIndex];
+      document.getElementById('lightboxTitle').textContent = p.title;
+      document.getElementById('lightboxCat').textContent   = p.category;
+      document.getElementById('lightboxPlaceholderLabel').textContent = p.title;
+
+      var img = document.getElementById('lightboxImg');
+      var placeholder = document.getElementById('lightboxPlaceholder');
+      if (p.img) {
+        img.src = p.img;
+        img.alt = p.title;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else {
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+
+      var pos = visibleIndices.indexOf(currentIndex);
+      document.getElementById('lightboxCounter').textContent = (pos + 1) + ' / ' + visibleIndices.length;
+    }
+
+    function lightboxNav(dir) {
+      var pos = visibleIndices.indexOf(currentIndex);
+      pos = (pos + dir + visibleIndices.length) % visibleIndices.length;
+      currentIndex = visibleIndices[pos];
+      renderLightbox();
+    }
+
+    document.getElementById('lightboxClose').addEventListener('click', closeLightbox);
+    document.getElementById('lightboxPrev').addEventListener('click', function() { lightboxNav(-1); });
+    document.getElementById('lightboxNext').addEventListener('click', function() { lightboxNav(1); });
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+      if (e.target === document.getElementById('lightbox')) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (e.key === 'Escape')      closeLightbox();
+      if (e.key === 'ArrowLeft')   lightboxNav(-1);
+      if (e.key === 'ArrowRight')  lightboxNav(1);
+    });
+  </script>
+
+</body>
+</html>
