@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Onsight — ADU Project Timeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800&family=Figtree:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e1110;
+    --surface: #161a17;
+    --surface2: #1d2420;
+    --border: #2a332d;
+    --text: #e8ede9;
+    --muted: #6b7a6e;
+    --accent: #7fc47f;
+    --accent2: #4a9e6b;
+
+    --permit: #7fc47f;
+    --design: #6ab0d4;
+    --construction: #e8a44a;
+    --utility: #c47fc4;
+    --finance: #c4a87f;
+
+    --row-h: 44px;
+    --label-w: 220px;
+    --header-h: 60px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Figtree', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .app-header h1 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .app-header h1 span { color: var(--accent); }
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Figtree', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.active { background: var(--accent); color: #0e1110; border-color: var(--accent); font-weight: 500; }
+
+  /* ── Legend ── */
+  .legend {
+    padding: 16px 40px;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .legend-item:hover { color: var(--text); }
+  .legend-item.hidden { opacity: 0.35; }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* ── Summary cards ── */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .summary-card {
+    background: var(--surface);
+    padding: 20px 24px;
+  }
+  .summary-card .label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+  .summary-card .value {
+    font-family: 'Nunito', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .summary-card .value.accent { color: var(--accent); }
+
+  /* ── Gantt wrapper ── */
+  .gantt-outer {
+    overflow-x: auto;
+    overflow-y: visible;
+  }
+  .gantt-inner {
+    min-width: 900px;
+  }
+
+  /* ── Month header ── */
+  .gantt-header {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .gantt-label-col {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    flex-shrink: 0;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-right: 1px solid var(--border);
+  }
+  .gantt-months {
+    flex: 1;
+    display: flex;
+  }
+  .month-cell {
+    flex: 1;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .month-cell.current {
+    color: var(--accent);
+    background: rgba(127,196,127,0.04);
+  }
+  .month-cell.current::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    height: 6px;
+    background: var(--accent);
+    transform: translateX(-50%);
+  }
+
+  /* ── Category header ── */
+  .category-header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    transition: opacity 0.3s;
+  }
+  .category-header.hidden-cat { display: none; }
+  .cat-label {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    padding: 10px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 1px;
+    flex-shrink: 0;
+  }
+  .cat-toggle { color: var(--muted); font-size: 10px; margin-left: auto; }
+  .cat-bar-area { flex: 1; height: 36px; position: relative; overflow: hidden; }
+
+  /* ── Task rows ── */
+  .task-row {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    height: var(--row-h);
+    position: relative;
+    transition: background 0.15s;
+  }
+  .task-row:hover { background: var(--surface2); }
+  .task-row.collapsed { display: none; }
+  .task-name {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    padding: 0 16px 0 28px;
+    font-size: 11px;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+    transition: color 0.15s;
+  }
+  .task-row:hover .task-name { color: var(--text); }
+  .task-bar-area {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    cursor: pointer;
+  }
+
+  /* grid lines */
+  .task-bar-area::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent calc(100% / var(--cols) - 1px),
+      var(--border) calc(100% / var(--cols) - 1px),
+      var(--border) calc(100% / var(--cols))
+    );
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  /* current month highlight stripe */
+  .month-stripe {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: rgba(127,196,127,0.05);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Bars ── */
+  .bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 22px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: filter 0.15s, height 0.15s;
+    z-index: 1;
+  }
+  .bar:hover { filter: brightness(1.2); height: 26px; }
+  .bar.complete { opacity: 0.55; }
+  .bar.complete::after {
+    content: '✓';
+    margin-left: 4px;
+    font-size: 9px;
+  }
+  .bar.milestone {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 0;
+    transform: translateY(-50%) rotate(45deg);
+    padding: 0;
+  }
+
+  /* ── Tooltip ── */
+  .tooltip {
+    position: fixed;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 11px;
+    color: var(--text);
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.1s;
+    max-width: 240px;
+    line-height: 1.6;
+  }
+  .tooltip.visible { opacity: 1; }
+  .tooltip .tt-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .tooltip .tt-row { display: flex; justify-content: space-between; gap: 16px; }
+  .tooltip .tt-label { color: var(--muted); }
+
+  /* ── Phase 2 separator ── */
+  .phase-sep {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .phase-sep-label {
+    width: var(--label-w);
+    min-width: var(--label-w);
+    padding: 8px 16px;
+    font-size: 9px;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-right: 1px solid var(--border);
+  }
+  .phase-sep-line {
+    flex: 1;
+    height: 1px;
+    background: repeating-linear-gradient(90deg, var(--accent) 0, var(--accent) 6px, transparent 6px, transparent 12px);
+    opacity: 0.3;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <h1>ADU Project <span>Timeline</span></h1>
+    <div class="subtitle">2430 Vining St · Bellingham, WA · Phase 1 + Phase 2</div>
+  </div>
+  <div class="controls">
+    <button class="btn active" id="btn-all" onclick="setView('all')">All phases</button>
+    <button class="btn" id="btn-p1" onclick="setView('p1')">Phase 1 only</button>
+    <button class="btn" id="btn-p2" onclick="setView('p2')">Phase 2 only</button>
+  </div>
+</div>
+
+<div class="legend" id="legend"></div>
+<div class="summary" id="summary"></div>
+
+<div class="gantt-outer">
+  <div class="gantt-inner" id="gantt"></div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+// Dates as [year, month (1-based), day]
+const START_DATE = new Date(2026, 0, 1);  // Jan 2026
+const END_DATE   = new Date(2028, 2, 28); // Mar 2028
+const TODAY      = new Date(2026, 3, 26); // Apr 26 2026
+
+const CATS = {
+  finance:      { label: 'Financing',            color: '#c4a87f' },
+  design:       { label: 'Design & Planning',     color: '#6ab0d4' },
+  permit:       { label: 'Permitting & Approvals',color: '#7fc47f' },
+  utility:      { label: 'Utility Hookups',       color: '#c47fc4' },
+  construction: { label: 'Construction',          color: '#e8a44a' },
+};
+
+// status: 'done' | 'active' | 'upcoming'
+const TASKS = [
+  // ── PHASE 1: Garage ADU ──────────────────────────────────────────────────
+  // Finance
+  { id:'f1', cat:'finance', phase:'p1', name:'Initial capital secured',      start:[2026,1,1],  end:[2026,1,15], status:'done',     note:'Cash on hand for Phase 1 construction' },
+  { id:'f4', cat:'finance', phase:'p1', name:'Secondary financing round',    start:[2027,5,15], end:[2027,7,1],  status:'upcoming', note:'Potential financing mid-construction, after foundation & framing' },
+  { id:'f5', cat:'finance', phase:'p1', name:'Construction draw / refi',     start:[2027,9,10], end:[2027,10,15],status:'upcoming', note:'Post-CO cash-out refi or draw to fund Phase 2' },
+
+  // Design
+  { id:'d1', cat:'design', phase:'p1', name:'Schematic design',          start:[2026,5,1],  end:[2026,5,31], status:'active',   note:'Garage ADU footprint, massing, access from Alabama St' },
+  { id:'d2', cat:'design', phase:'p1', name:'Design development',        start:[2026,6,1],  end:[2026,7,31], status:'upcoming', note:'Floor plans, elevations, structural concept' },
+  { id:'d3', cat:'design', phase:'p1', name:'Construction documents',    start:[2026,8,1],  end:[2026,10,1], status:'upcoming', note:'Full permit-ready drawing set' },
+
+  // Permit
+  { id:'p1a', cat:'permit', phase:'p1', name:'Pre-app + Type I permit submittal', start:[2026,10,1],  end:[2026,10,20], status:'upcoming', note:'Type I is staff-level — pre-app and building permit submitted simultaneously' },
+  { id:'p1b', cat:'permit', phase:'p1', name:'Public Works — utility cap',        start:[2026,10,1],  end:[2026,11,1],  status:'upcoming', note:'Verify water/sewer capacity for ADU + DADU; run parallel to permit submittal' },
+  { id:'p1d', cat:'permit', phase:'p1', name:'Permit review & corrections',       start:[2026,10,20], end:[2026,12,20], status:'upcoming', note:'Type I staff review; 4–8 weeks typical; allow time for corrections' },
+  { id:'p1e', cat:'permit', phase:'p1', name:'Permit issued',                     start:[2026,12,20], end:[2027,1,1],   status:'upcoming', note:'Green light for construction' },
+
+  // Utility (Phase 1 — stub to property line)
+  { id:'u1', cat:'utility', phase:'p1', name:'Water/sewer stub design',  start:[2026,10,1],  end:[2026,11,1],  status:'upcoming', note:'Design dual-service capacity for Phase 2 DADU' },
+  { id:'u2', cat:'utility', phase:'p1', name:'Side sewer permit',        start:[2026,11,1],  end:[2026,12,1],  status:'upcoming', note:'City permit for new sewer lateral' },
+  { id:'u3', cat:'utility', phase:'p1', name:'Utility rough-in',         start:[2027,1,1],   end:[2027,2,15],  status:'upcoming', note:'Water, sewer, electric to garage ADU; stubs sized for Phase 2' },
+
+  // Construction Phase 1
+  { id:'c1', cat:'construction', phase:'p1', name:'Site prep & demo',    start:[2027,2,15], end:[2027,3,1],  status:'upcoming', note:'Clear existing garage, grade site' },
+  { id:'c2', cat:'construction', phase:'p1', name:'Foundation',          start:[2027,3,1],  end:[2027,4,1],  status:'upcoming', note:'Concrete slab or stem wall per structural' },
+  { id:'c3', cat:'construction', phase:'p1', name:'Framing',             start:[2027,4,1],  end:[2027,5,1],  status:'upcoming', note:'Wall, floor, roof framing' },
+  { id:'c4', cat:'construction', phase:'p1', name:'Rough MEP',           start:[2027,4,15], end:[2027,5,15], status:'upcoming', note:'Rough plumbing, electric, HVAC' },
+  { id:'c5', cat:'construction', phase:'p1', name:'Insulation & drywall',start:[2027,5,15], end:[2027,6,15], status:'upcoming', note:'Batt insulation, hang & tape drywall' },
+  { id:'c6', cat:'construction', phase:'p1', name:'Finishes & fixtures', start:[2027,6,15], end:[2027,7,20], status:'upcoming', note:'Flooring, cabinetry, paint, fixtures' },
+  { id:'c7', cat:'construction', phase:'p1', name:'Final inspections',   start:[2027,7,20], end:[2027,8,15], status:'upcoming', note:'Building, plumbing, electrical finals' },
+  { id:'c8', cat:'construction', phase:'p1', name:'Certificate of Occupancy',start:[2027,8,15],end:[2027,8,20],status:'upcoming',note:'Phase 1 complete — ADU rentable' },
+
+  // ── PHASE 2: Rear DADU ───────────────────────────────────────────────────
+  // Finance
+  // Phase 2 Finance placeholder removed — rolled into Phase 1 finance tracks above
+
+  // Design
+  { id:'d4', cat:'design', phase:'p2', name:'Schematic design — DADU',  start:[2027,5,1],  end:[2027,6,15], status:'upcoming', note:'Rear detached ADU drawing from Phase 1 infra' },
+  { id:'d5', cat:'design', phase:'p2', name:'Design development',        start:[2027,6,15], end:[2027,8,1],  status:'upcoming', note:'Floor plans, elevations, structural' },
+  { id:'d6', cat:'design', phase:'p2', name:'Construction documents',    start:[2027,8,1],  end:[2027,9,15], status:'upcoming', note:'Permit-ready drawing set' },
+
+  // Permit
+  { id:'p2a', cat:'permit', phase:'p2', name:'Permit submittal — DADU', start:[2027,10,15], end:[2027,11,1],  status:'upcoming', note:'Submit Phase 2 permit app' },
+  { id:'p2b', cat:'permit', phase:'p2', name:'Plan check & corrections', start:[2027,11,1],  end:[2027,12,15], status:'upcoming', note:'City review cycle' },
+  { id:'p2c', cat:'permit', phase:'p2', name:'Permit issued — DADU',    start:[2027,12,15], end:[2027,12,20], status:'upcoming', note:'Begin Phase 2 construction' },
+
+  // Utility
+  { id:'u4', cat:'utility', phase:'p2', name:'Extend utilities to DADU',start:[2027,12,20], end:[2028,1,15],  status:'upcoming', note:'Tap Phase 1 stubs; run to rear lot' },
+
+  // Construction Phase 2
+  { id:'c9',  cat:'construction', phase:'p2', name:'Site prep — DADU',  start:[2027,12,20], end:[2028,1,10],  status:'upcoming', note:'Grade, erosion control' },
+  { id:'c10', cat:'construction', phase:'p2', name:'Foundation — DADU', start:[2028,1,10],  end:[2028,2,10],  status:'upcoming', note:'Concrete work' },
+];
+
+// ── Time helpers ──────────────────────────────────────────────────────────────
+function dateFromArr(arr){ return new Date(arr[0], arr[1]-1, arr[2]); }
+function totalDays(a,b){ return (b-a)/(1000*60*60*24); }
+const SPAN = totalDays(START_DATE, END_DATE);
+
+function pct(date){ return Math.max(0, Math.min(100, totalDays(START_DATE, date)/SPAN*100)); }
+
+// ── Month columns ────────────────────────────────────────────────────────────
+function getMonths(){
+  const months = [];
+  let d = new Date(START_DATE.getFullYear(), START_DATE.getMonth(), 1);
+  while(d <= END_DATE){
+    months.push(new Date(d));
+    d = new Date(d.getFullYear(), d.getMonth()+1, 1);
+  }
+  return months;
+}
+const MONTHS = getMonths();
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let hiddenCats = new Set();
+let collapsedCats = new Set();
+let currentView = 'all';
+
+// ── Build Gantt ───────────────────────────────────────────────────────────────
+function build(){
+  const gantt = document.getElementById('gantt');
+  gantt.style.setProperty('--cols', MONTHS.length);
+  gantt.innerHTML = '';
+
+  // Month header
+  const header = document.createElement('div');
+  header.className = 'gantt-header';
+  const labelCol = document.createElement('div');
+  labelCol.className = 'gantt-label-col';
+  labelCol.textContent = 'Task';
+  header.appendChild(labelCol);
+  const monthsDiv = document.createElement('div');
+  monthsDiv.className = 'gantt-months';
+  MONTHS.forEach((m, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'month-cell';
+    if(m.getFullYear() === TODAY.getFullYear() && m.getMonth() === TODAY.getMonth()){
+      cell.classList.add('current');
+    }
+    cell.textContent = MONTH_NAMES[m.getMonth()] + ' ' + String(m.getFullYear()).slice(2);
+    monthsDiv.appendChild(cell);
+  });
+  header.appendChild(monthsDiv);
+  gantt.appendChild(header);
+
+  // Current month stripe pct
+  const todayPct = pct(TODAY);
+  const monthWidth = 100/MONTHS.length;
+  const curMonthIdx = MONTHS.findIndex(m => m.getFullYear()===TODAY.getFullYear() && m.getMonth()===TODAY.getMonth());
+  const stripeLeft = curMonthIdx * monthWidth;
+
+  // Filter tasks by view
+  const visibleTasks = TASKS.filter(t => currentView === 'all' || t.phase === currentView);
+
+  // Group by category, preserving cat order
+  Object.entries(CATS).forEach(([catKey, catInfo]) => {
+    const tasks = visibleTasks.filter(t => t.cat === catKey);
+    if(!tasks.length) return;
+
+    const hidden = hiddenCats.has(catKey);
+    const collapsed = collapsedCats.has(catKey);
+
+    // Category header
+    const catRow = document.createElement('div');
+    catRow.className = 'category-header' + (hidden ? ' hidden-cat' : '');
+    catRow.dataset.cat = catKey;
+
+    const catLabelEl = document.createElement('div');
+    catLabelEl.className = 'cat-label';
+    catLabelEl.style.color = catInfo.color;
+    catLabelEl.innerHTML = `<span class="cat-dot" style="background:${catInfo.color}"></span>${catInfo.label}<span class="cat-toggle">${collapsed?'▶':'▼'}</span>`;
+    catLabelEl.onclick = () => toggleCollapse(catKey);
+    catRow.appendChild(catLabelEl);
+
+    const catBarArea = document.createElement('div');
+    catBarArea.className = 'cat-bar-area';
+    catBarArea.style.setProperty('--cols', MONTHS.length);
+
+    if(collapsed){
+      // Stripe + today line
+      const stripe = document.createElement('div');
+      stripe.className = 'month-stripe';
+      stripe.style.left = stripeLeft + '%';
+      stripe.style.width = monthWidth + '%';
+      catBarArea.appendChild(stripe);
+
+      const todayLine = document.createElement('div');
+      todayLine.style.cssText = `position:absolute;top:0;bottom:0;left:${todayPct}%;width:2px;background:rgba(127,196,127,0.5);z-index:2;pointer-events:none;`;
+      catBarArea.appendChild(todayLine);
+
+      // Render each task as a slim bar
+      tasks.forEach(task => {
+        const s = dateFromArr(task.start);
+        const e = dateFromArr(task.end);
+        const left = pct(s);
+        const width = Math.max(0.5, pct(e) - left);
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.left = left + '%';
+        bar.style.width = width + '%';
+        bar.style.height = '10px';
+        bar.style.borderRadius = '2px';
+        bar.style.fontSize = '0';
+
+        if(task.status === 'done'){
+          bar.style.background = catInfo.color;
+          bar.style.opacity = '0.4';
+        } else if(task.status === 'active'){
+          bar.style.background = catInfo.color;
+          bar.style.boxShadow = `0 0 6px ${catInfo.color}88`;
+        } else {
+          bar.style.background = 'transparent';
+          bar.style.border = `1.5px solid ${catInfo.color}`;
+          bar.style.opacity = '0.7';
+        }
+
+        bar.addEventListener('mouseenter', e => showTooltip(e, task, catInfo));
+        bar.addEventListener('mousemove', e => moveTooltip(e));
+        bar.addEventListener('mouseleave', hideTooltip);
+        catBarArea.appendChild(bar);
+      });
+    }
+
+    catRow.appendChild(catBarArea);
+    gantt.appendChild(catRow);
+
+    // Task rows
+    tasks.forEach(task => {
+      const row = document.createElement('div');
+      row.className = 'task-row' + (hidden || collapsed ? ' collapsed' : '');
+      row.dataset.cat = catKey;
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'task-name';
+      nameEl.textContent = task.name;
+      row.appendChild(nameEl);
+
+      const barArea = document.createElement('div');
+      barArea.className = 'task-bar-area';
+      barArea.style.setProperty('--cols', MONTHS.length);
+
+      // Stripe
+      const stripe = document.createElement('div');
+      stripe.className = 'month-stripe';
+      stripe.style.left = stripeLeft + '%';
+      stripe.style.width = monthWidth + '%';
+      barArea.appendChild(stripe);
+
+      // Today line
+      const todayLine = document.createElement('div');
+      todayLine.style.cssText = `position:absolute;top:0;bottom:0;left:${todayPct}%;width:2px;background:rgba(127,196,127,0.5);z-index:2;pointer-events:none;`;
+      barArea.appendChild(todayLine);
+
+      // Bar
+      const s = dateFromArr(task.start);
+      const e = dateFromArr(task.end);
+      const left = pct(s);
+      const width = Math.max(0.5, pct(e) - left);
+
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.style.left = left + '%';
+      bar.style.width = width + '%';
+
+      if(task.status === 'done'){
+        bar.style.background = catInfo.color;
+        bar.style.color = '#0e1110';
+        bar.style.opacity = '0.4';
+      } else if(task.status === 'active'){
+        bar.style.background = catInfo.color;
+        bar.style.color = '#0e1110';
+        bar.style.boxShadow = `0 0 8px ${catInfo.color}88`;
+      } else {
+        bar.style.background = 'transparent';
+        bar.style.border = `1.5px solid ${catInfo.color}`;
+        bar.style.color = catInfo.color;
+        bar.style.opacity = '0.7';
+      }
+
+      // Show label only if bar is wide enough
+      if(width > 6) bar.textContent = task.name;
+
+      // Tooltip
+      bar.addEventListener('mouseenter', e => showTooltip(e, task, catInfo));
+      bar.addEventListener('mousemove', e => moveTooltip(e));
+      bar.addEventListener('mouseleave', hideTooltip);
+
+      barArea.appendChild(bar);
+      row.appendChild(barArea);
+      gantt.appendChild(row);
+    });
+
+    // Phase separator after Phase 1 tasks if showing both
+    if(currentView === 'all' && catKey === 'construction'){
+      const p1tasks = tasks.filter(t=>t.phase==='p1');
+      const p2tasks = tasks.filter(t=>t.phase==='p2');
+      if(p1tasks.length && p2tasks.length){
+        // already mixed, skip sep
+      }
+    }
+  });
+
+  // Phase 2 marker line if all
+  if(currentView === 'all'){
+    const sep = document.createElement('div');
+    sep.className = 'phase-sep';
+    const sl = document.createElement('div');
+    sl.className = 'phase-sep-label';
+    sl.textContent = '▲ Phase 1 · Phase 2 ▼';
+    sep.appendChild(sl);
+    const line = document.createElement('div');
+    line.className = 'phase-sep-line';
+    sep.appendChild(line);
+    // Insert after c8
+    const rows = gantt.querySelectorAll('.task-row');
+    let after = null;
+    rows.forEach(r => {
+      const name = r.querySelector('.task-name');
+      if(name && name.textContent === 'Certificate of Occupancy') after = r;
+    });
+    if(after && after.nextSibling) gantt.insertBefore(sep, after.nextSibling);
+    else gantt.appendChild(sep);
+  }
+
+  buildSummary();
+}
+
+function toggleCollapse(cat){
+  if(collapsedCats.has(cat)) collapsedCats.delete(cat);
+  else collapsedCats.add(cat);
+  build();
+}
+
+// ── Legend ───────────────────────────────────────────────────────────────────
+function buildLegend(){
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  Object.entries(CATS).forEach(([key, info]) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item' + (hiddenCats.has(key) ? ' hidden' : '');
+    item.innerHTML = `<span class="legend-dot" style="background:${info.color}"></span>${info.label}`;
+    item.onclick = () => {
+      if(hiddenCats.has(key)) hiddenCats.delete(key);
+      else hiddenCats.add(key);
+      item.classList.toggle('hidden');
+      build();
+    };
+    legend.appendChild(item);
+  });
+
+  // Status legend
+  ['Done','Active','Upcoming'].forEach((s,i) => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.style.marginLeft = i===0 ? '24px':'0';
+    const colors = ['#555','#7fc47f','transparent'];
+    const borders = ['none','none','1px solid #7fc47f'];
+    item.innerHTML = `<span class="legend-dot" style="background:${colors[i]};border:${borders[i]}"></span>${s}`;
+    legend.appendChild(item);
+  });
+}
+
+// ── Summary ───────────────────────────────────────────────────────────────────
+function buildSummary(){
+  const visibleTasks = TASKS.filter(t => currentView === 'all' || t.phase === currentView);
+  const done = visibleTasks.filter(t=>t.status==='done').length;
+  const active = visibleTasks.filter(t=>t.status==='active').length;
+  const total = visibleTasks.length;
+  const phaseLbl = currentView === 'all' ? 'Phase 1 + 2' : currentView === 'p1' ? 'Phase 1' : 'Phase 2';
+
+  // Find next milestone
+  const upcoming = visibleTasks.filter(t=>t.status==='upcoming');
+  const next = upcoming.sort((a,b)=>dateFromArr(a.start)-dateFromArr(b.start))[0];
+  const nextLabel = next ? next.name : '—';
+
+  // Est. completion
+  const allEnds = visibleTasks.map(t=>dateFromArr(t.end));
+  const completion = allEnds.length ? new Date(Math.max(...allEnds)) : null;
+  const compStr = completion ? MONTH_NAMES[completion.getMonth()] + ' ' + completion.getFullYear() : '—';
+
+  document.getElementById('summary').innerHTML = `
+    <div class="summary-card"><div class="label">Project</div><div class="value accent">${phaseLbl}</div></div>
+    <div class="summary-card"><div class="label">Tasks complete</div><div class="value">${done} / ${total}</div></div>
+    <div class="summary-card"><div class="label">Currently active</div><div class="value accent">${active}</div></div>
+    <div class="summary-card"><div class="label">Next milestone</div><div class="value" style="font-size:13px;padding-top:4px">${nextLabel}</div></div>
+    <div class="summary-card"><div class="label">Est. completion</div><div class="value">${compStr}</div></div>
+  `;
+}
+
+// ── Tooltip ───────────────────────────────────────────────────────────────────
+function showTooltip(e, task, catInfo){
+  const tt = document.getElementById('tooltip');
+  const s = dateFromArr(task.start);
+  const end = dateFromArr(task.end);
+  const dur = Math.round(totalDays(s, end));
+  const statusLabel = task.status === 'done' ? '✓ Complete' : task.status === 'active' ? '● In progress' : '○ Upcoming';
+  tt.innerHTML = `
+    <div class="tt-title" style="color:${catInfo.color}">${task.name}</div>
+    <div class="tt-row"><span class="tt-label">Start</span><span>${MONTH_NAMES[s.getMonth()]} ${s.getDate()}, ${s.getFullYear()}</span></div>
+    <div class="tt-row"><span class="tt-label">End</span><span>${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}</span></div>
+    <div class="tt-row"><span class="tt-label">Duration</span><span>${dur} days</span></div>
+    <div class="tt-row"><span class="tt-label">Status</span><span style="color:${catInfo.color}">${statusLabel}</span></div>
+    ${task.note ? `<div style="margin-top:8px;color:var(--muted);font-size:10px;line-height:1.5">${task.note}</div>` : ''}
+  `;
+  tt.classList.add('visible');
+  moveTooltip(e);
+}
+function moveTooltip(e){
+  const tt = document.getElementById('tooltip');
+  const x = e.clientX + 14;
+  const y = e.clientY + 14;
+  tt.style.left = Math.min(x, window.innerWidth - 260) + 'px';
+  tt.style.top = Math.min(y, window.innerHeight - 200) + 'px';
+}
+function hideTooltip(){
+  document.getElementById('tooltip').classList.remove('visible');
+}
+
+// ── View switcher ─────────────────────────────────────────────────────────────
+function setView(v){
+  currentView = v;
+  ['all','p1','p2'].forEach(id => {
+    document.getElementById('btn-'+id).classList.toggle('active', id===v);
+  });
+  build();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+buildLegend();
+build();
+</script>
+</body>
+</html>
