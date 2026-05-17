@@ -413,6 +413,136 @@
                 color: var(--muted);
             }
 
+            /* ── Notes modal ── */
+            .notes-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 200;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.15s;
+            }
+            .notes-overlay.open {
+                opacity: 1;
+                pointer-events: all;
+            }
+            .notes-panel {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                width: 420px;
+                max-width: calc(100vw - 40px);
+                padding: 24px;
+                position: relative;
+                transform: translateY(8px);
+                transition: transform 0.15s;
+            }
+            .notes-overlay.open .notes-panel {
+                transform: translateY(0);
+            }
+            .notes-close {
+                position: absolute;
+                top: 14px;
+                right: 16px;
+                background: none;
+                border: none;
+                color: var(--muted);
+                font-size: 18px;
+                cursor: pointer;
+                line-height: 1;
+                padding: 2px 6px;
+                border-radius: 3px;
+                transition: color 0.1s;
+            }
+            .notes-close:hover {
+                color: var(--text);
+            }
+            .notes-task-title {
+                font-family: "Nunito", sans-serif;
+                font-size: 15px;
+                font-weight: 700;
+                margin-bottom: 4px;
+            }
+            .notes-meta {
+                font-size: 10px;
+                color: var(--muted);
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                margin-bottom: 16px;
+            }
+            .notes-desc {
+                font-size: 11px;
+                color: var(--muted);
+                line-height: 1.6;
+                margin-bottom: 16px;
+                padding-bottom: 16px;
+                border-bottom: 1px solid var(--border);
+            }
+            .notes-label {
+                font-size: 10px;
+                color: var(--muted);
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                margin-bottom: 8px;
+            }
+            .notes-textarea {
+                width: 100%;
+                min-height: 100px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 4px;
+                color: var(--text);
+                font-family: "Figtree", sans-serif;
+                font-size: 12px;
+                line-height: 1.6;
+                padding: 10px 12px;
+                resize: vertical;
+                outline: none;
+                transition: border-color 0.15s;
+            }
+            .notes-textarea:focus {
+                border-color: var(--accent);
+            }
+            .notes-textarea::placeholder {
+                color: var(--muted);
+            }
+            .notes-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 10px;
+            }
+            .notes-saved {
+                font-size: 10px;
+                color: var(--accent);
+                opacity: 0;
+                transition: opacity 0.3s;
+            }
+            .notes-saved.show {
+                opacity: 1;
+            }
+            .notes-clear {
+                background: none;
+                border: 1px solid var(--border);
+                color: var(--muted);
+                font-family: "Figtree", sans-serif;
+                font-size: 10px;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                padding: 5px 10px;
+                border-radius: 3px;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            .notes-clear:hover {
+                border-color: #c47f7f;
+                color: #c47f7f;
+            }
+
             /* ── Phase 2 separator ── */
             .phase-sep {
                 display: flex;
@@ -477,6 +607,27 @@
         </div>
 
         <div class="tooltip" id="tooltip"></div>
+
+        <div class="notes-overlay" id="notesOverlay">
+            <div class="notes-panel" id="notesPanel">
+                <button class="notes-close" onclick="closeNotes()">×</button>
+                <div class="notes-task-title" id="notesPanelTitle"></div>
+                <div class="notes-meta" id="notesPanelMeta"></div>
+                <div class="notes-desc" id="notesPanelDesc"></div>
+                <div class="notes-label">Notes</div>
+                <textarea
+                    class="notes-textarea"
+                    id="notesTextarea"
+                    placeholder="Add your notes here…"
+                ></textarea>
+                <div class="notes-footer">
+                    <span class="notes-saved" id="notesSaved">Saved</span>
+                    <button class="notes-clear" id="notesClear">
+                        Clear notes
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <script>
             // ── Data ─────────────────────────────────────────────────────────────────────
@@ -998,6 +1149,10 @@
                                 moveTooltip(e),
                             );
                             bar.addEventListener("mouseleave", hideTooltip);
+                            bar.addEventListener("click", (e) => {
+                                e.stopPropagation();
+                                openNotes(task, catInfo);
+                            });
                             catBarArea.appendChild(bar);
                         });
                     }
@@ -1071,6 +1226,10 @@
                             moveTooltip(e),
                         );
                         bar.addEventListener("mouseleave", hideTooltip);
+                        bar.addEventListener("click", (e) => {
+                            e.stopPropagation();
+                            openNotes(task, catInfo);
+                        });
 
                         barArea.appendChild(bar);
                         row.appendChild(barArea);
@@ -1201,8 +1360,204 @@
   `;
             }
 
-            // ── Tooltip ───────────────────────────────────────────────────────────────────
+            // ── Tooltip movement & hide ───────────────────────────────────────────────────
+            function moveTooltip(e) {
+                const tt = document.getElementById("tooltip");
+                const x = e.clientX + 14;
+                const y = e.clientY + 14;
+                tt.style.left = Math.min(x, window.innerWidth - 260) + "px";
+                tt.style.top = Math.min(y, window.innerHeight - 200) + "px";
+            }
+            function hideTooltip() {
+                document.getElementById("tooltip").classList.remove("visible");
+            }
+
+            // ── GitHub notes config ───────────────────────────────────────────────────────
+            // Create a fine-grained PAT at https://github.com/settings/tokens
+            // Permissions needed: Contents — Read and Write (on this repo only)
+            const GH = {
+                owner: "jldana", // e.g. 'jsmith'
+                repo: "onsightco.com", // e.g. 'onsightco'
+                path: "notes.json", // file path inside the repo
+                token: "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",
+            };
+
+            const GH_API = `https://api.github.com/repos/${GH.owner}/${GH.repo}/contents/${GH.path}`;
+            const GH_RAW = `https://raw.githubusercontent.com/${GH.owner}/${GH.repo}/main/${GH.path}`;
+
+            // ── Notes state ───────────────────────────────────────────────────────────────
+            let notesData = {}; // { taskId: "note text", ... }
+            let notesSha = null; // current blob SHA — required for GitHub PUT updates
+            let notesTask = null;
+            let saveTimer = null;
+
+            // ── Load notes from GitHub on startup ────────────────────────────────────────
+            async function loadNotes() {
+                try {
+                    // Use raw URL (no auth, no rate-limit cost) — add cache-buster so we always get fresh data
+                    const res = await fetch(GH_RAW + "?t=" + Date.now());
+                    if (res.ok) {
+                        notesData = await res.json();
+                    } else if (res.status === 404) {
+                        notesData = {}; // file doesn't exist yet — will be created on first save
+                    }
+                    // Fetch SHA separately (needed for commits) via the API
+                    await refreshSha();
+                } catch (err) {
+                    console.warn("Notes load failed:", err);
+                    notesData = {};
+                }
+                // Re-render so tooltip note indicators appear
+                build();
+            }
+
+            async function refreshSha() {
+                try {
+                    const res = await fetch(GH_API, {
+                        headers: {
+                            Authorization: "token " + GH.token,
+                            Accept: "application/vnd.github+json",
+                        },
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        notesSha = data.sha;
+                    } else {
+                        notesSha = null; // 404 = new file
+                    }
+                } catch (e) {
+                    notesSha = null;
+                }
+            }
+
+            // ── Commit notes.json to GitHub ───────────────────────────────────────────────
+            async function commitNotes() {
+                setSyncStatus("saving");
+                try {
+                    const content = btoa(
+                        unescape(
+                            encodeURIComponent(
+                                JSON.stringify(notesData, null, 2),
+                            ),
+                        ),
+                    );
+                    const body = {
+                        message: "Update notes",
+                        content,
+                        ...(notesSha ? { sha: notesSha } : {}),
+                    };
+                    const res = await fetch(GH_API, {
+                        method: "PUT",
+                        headers: {
+                            Authorization: "token " + GH.token,
+                            Accept: "application/vnd.github+json",
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify(body),
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        notesSha = data.content.sha;
+                        setSyncStatus("saved");
+                    } else {
+                        const err = await res.json();
+                        console.error("GitHub commit failed:", err);
+                        setSyncStatus("error");
+                    }
+                } catch (e) {
+                    console.error("Notes commit error:", e);
+                    setSyncStatus("error");
+                }
+            }
+
+            function setSyncStatus(state) {
+                const el = document.getElementById("notesSaved");
+                el.classList.remove("show", "error");
+                if (state === "saving") {
+                    el.textContent = "Saving…";
+                    el.classList.add("show");
+                } else if (state === "saved") {
+                    el.textContent = "Saved to GitHub ✓";
+                    el.classList.add("show");
+                    setTimeout(() => el.classList.remove("show"), 2500);
+                } else if (state === "error") {
+                    el.textContent = "Save failed — check token";
+                    el.style.color = "#c47f7f";
+                    el.classList.add("show");
+                }
+            }
+
+            // ── Notes panel ───────────────────────────────────────────────────────────────
+            function openNotes(task, catInfo) {
+                hideTooltip();
+                notesTask = task;
+                const s = dateFromArr(task.start);
+                const end = dateFromArr(task.end);
+                const dur = Math.round(totalDays(s, end));
+                const statusLabel =
+                    task.status === "done"
+                        ? "✓ Complete"
+                        : task.status === "active"
+                          ? "● In progress"
+                          : "○ Upcoming";
+
+                document.getElementById("notesPanelTitle").textContent =
+                    task.name;
+                document.getElementById("notesPanelTitle").style.color =
+                    catInfo.color;
+                document.getElementById("notesPanelMeta").textContent =
+                    `${MONTH_NAMES[s.getMonth()]} ${s.getDate()} – ${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}  ·  ${dur} days  ·  ${statusLabel}`;
+                document.getElementById("notesPanelDesc").textContent =
+                    task.note || "";
+                document.getElementById("notesPanelDesc").style.display =
+                    task.note ? "" : "none";
+
+                const ta = document.getElementById("notesTextarea");
+                ta.value = notesData[task.id] || "";
+                document.getElementById("notesSaved").classList.remove("show");
+                document.getElementById("notesSaved").style.color = "";
+                document.getElementById("notesOverlay").classList.add("open");
+                ta.focus();
+            }
+
+            function closeNotes() {
+                document
+                    .getElementById("notesOverlay")
+                    .classList.remove("open");
+                notesTask = null;
+            }
+
+            document
+                .getElementById("notesTextarea")
+                .addEventListener("input", function () {
+                    if (!notesTask) return;
+                    notesData[notesTask.id] = this.value;
+                    clearTimeout(saveTimer);
+                    saveTimer = setTimeout(() => commitNotes(), 800);
+                });
+
+            document
+                .getElementById("notesClear")
+                .addEventListener("click", function () {
+                    if (!notesTask) return;
+                    document.getElementById("notesTextarea").value = "";
+                    notesData[notesTask.id] = "";
+                    commitNotes();
+                });
+
+            document
+                .getElementById("notesOverlay")
+                .addEventListener("click", function (e) {
+                    if (e.target === this) closeNotes();
+                });
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeNotes();
+            });
+
+            // ── Tooltip with note preview ─────────────────────────────────────────────────
             function showTooltip(e, task, catInfo) {
+                const userNote = notesData[task.id];
                 const tt = document.getElementById("tooltip");
                 const s = dateFromArr(task.start);
                 const end = dateFromArr(task.end);
@@ -1220,19 +1575,11 @@
     <div class="tt-row"><span class="tt-label">Duration</span><span>${dur} days</span></div>
     <div class="tt-row"><span class="tt-label">Status</span><span style="color:${catInfo.color}">${statusLabel}</span></div>
     ${task.note ? `<div style="margin-top:8px;color:var(--muted);font-size:10px;line-height:1.5">${task.note}</div>` : ""}
+    ${userNote ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:var(--text);line-height:1.5;white-space:pre-wrap">${userNote}</div>` : ""}
+    <div style="margin-top:8px;font-size:9px;color:var(--muted);letter-spacing:0.06em">Click to ${userNote ? "edit" : "add"} notes</div>
   `;
                 tt.classList.add("visible");
                 moveTooltip(e);
-            }
-            function moveTooltip(e) {
-                const tt = document.getElementById("tooltip");
-                const x = e.clientX + 14;
-                const y = e.clientY + 14;
-                tt.style.left = Math.min(x, window.innerWidth - 260) + "px";
-                tt.style.top = Math.min(y, window.innerHeight - 200) + "px";
-            }
-            function hideTooltip() {
-                document.getElementById("tooltip").classList.remove("visible");
             }
 
             // ── View switcher ─────────────────────────────────────────────────────────────
@@ -1248,7 +1595,8 @@
 
             // ── Init ──────────────────────────────────────────────────────────────────────
             buildLegend();
-            build();
+            build(); // first render without notes (fast)
+            loadNotes(); // async — re-renders once notes arrive
         </script>
     </body>
 </html>
