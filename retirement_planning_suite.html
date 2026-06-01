@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semi-Retirement Planning Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<template id="tpl-shared-style"><style>
+:root{
+ --color-background-primary:#ffffff;
+ --color-background-secondary:#f4f2ec;
+ --color-background-tertiary:#faf8f3;
+ --color-background-info:#E6F1FB;
+ --color-background-success:#EAF3DE;
+ --color-background-warning:#FAEEDA;
+ --color-background-danger:#FCEBEB;
+ --color-text-primary:#23221f;
+ --color-text-secondary:#6f6e66;
+ --color-text-tertiary:#9a988f;
+ --color-text-info:#0C447C;
+ --color-text-success:#27500A;
+ --color-text-warning:#633806;
+ --color-text-danger:#791F1F;
+ --color-border-tertiary:rgba(35,34,31,0.12);
+ --color-border-secondary:rgba(35,34,31,0.22);
+ --color-border-primary:rgba(35,34,31,0.34);
+ --color-border-info:#378ADD;
+ --font-sans:'Spline Sans',ui-sans-serif,system-ui,-apple-system,sans-serif;
+ --font-serif:'Fraunces',Georgia,serif;
+ --font-mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+ --border-radius-md:8px;
+ --border-radius-lg:12px;
+ --border-radius-xl:16px;
+}
+.theme-dark{
+ --color-background-primary:#2a2826;
+ --color-background-secondary:#211f1d;
+ --color-background-tertiary:#1a1917;
+ --color-background-info:#10324f;
+ --color-background-success:#1e3a12;
+ --color-background-warning:#48330c;
+ --color-background-danger:#481717;
+ --color-text-primary:#f3f1ea;
+ --color-text-secondary:#b3b1a7;
+ --color-text-tertiary:#86847c;
+ --color-text-info:#9fc7f0;
+ --color-text-success:#bcdd96;
+ --color-text-warning:#f0c780;
+ --color-text-danger:#f0a3a3;
+ --color-border-tertiary:rgba(243,241,234,0.14);
+ --color-border-secondary:rgba(243,241,234,0.26);
+ --color-border-primary:rgba(243,241,234,0.38);
+ --color-border-info:#378ADD;
+}
+</style></template>
+<script>document.head.insertAdjacentHTML('beforeend',document.getElementById('tpl-shared-style').innerHTML);</script>
+
+<style>
+html[data-theme="dark"]{
+ --color-background-primary:#2a2826;--color-background-secondary:#211f1d;--color-background-tertiary:#1a1917;
+ --color-background-info:#10324f;--color-background-success:#1e3a12;--color-background-warning:#48330c;--color-background-danger:#481717;
+ --color-text-primary:#f3f1ea;--color-text-secondary:#b3b1a7;--color-text-tertiary:#86847c;
+ --color-text-info:#9fc7f0;--color-text-success:#bcdd96;--color-text-warning:#f0c780;--color-text-danger:#f0a3a3;
+ --color-border-tertiary:rgba(243,241,234,0.14);--color-border-secondary:rgba(243,241,234,0.26);--color-border-primary:rgba(243,241,234,0.38);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+ background:var(--color-background-tertiary);
+ color:var(--color-text-primary);
+ font-family:var(--font-sans);
+ font-size:16px;line-height:1.65;
+ -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px;margin:0 auto;padding:0 24px 80px}
+.topbar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--color-background-tertiary) 88%,transparent);backdrop-filter:blur(8px);border-bottom:0.5px solid var(--color-border-tertiary)}
+.topbar-inner{max-width:900px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand .mark{font-family:var(--font-serif);font-weight:600;font-size:19px;letter-spacing:-0.01em;white-space:nowrap}
+.brand .tag{font-size:12.5px;color:var(--color-text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbtn{font-family:var(--font-sans);font-size:13px;color:var(--color-text-secondary);background:transparent;border:0.5px solid var(--color-border-secondary);border-radius:999px;padding:6px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:background .15s,color .15s}
+.tbtn:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.tbtn svg{width:15px;height:15px}
+
+header.hero{padding:54px 0 26px;animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+.kicker{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-text-tertiary);margin:0 0 14px}
+h1{font-family:var(--font-serif);font-weight:500;font-size:46px;line-height:1.04;letter-spacing:-0.02em;margin:0 0 18px}
+h1 em{font-style:italic;color:var(--color-text-secondary)}
+.lede{font-size:17px;color:var(--color-text-secondary);max-width:62ch;margin:0}
+
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin:30px 0 0;border-bottom:0.5px solid var(--color-border-tertiary);position:sticky;top:55px;z-index:10;background:var(--color-background-tertiary)}
+.tab{font-family:var(--font-sans);font-size:14.5px;color:var(--color-text-secondary);background:transparent;border:0;border-bottom:2px solid transparent;padding:12px 14px;cursor:pointer;margin-bottom:-0.5px;transition:color .15s,border-color .15s;white-space:nowrap}
+.tab:hover{color:var(--color-text-primary)}
+.tab.on{color:var(--color-text-primary);border-bottom-color:var(--accent,#0F6E56);font-weight:500}
+html[data-theme="dark"] .tab.on{border-bottom-color:#5DCAA5}
+
+.panel{display:none;padding:30px 0 0}
+.panel.on{display:block;animation:fade .35s ease both}
+.panel .what{font-size:15.5px;color:var(--color-text-secondary);max-width:64ch;margin:0 0 6px}
+.panel .what b{color:var(--color-text-primary);font-weight:500}
+.panel .hand{font-size:13px;color:var(--color-text-tertiary);margin:0 0 22px}
+.toolcard{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-xl);padding:22px 24px}
+.toolframe{width:100%;border:0;display:block;background:transparent}
+
+footer{margin-top:48px;padding-top:22px;border-top:0.5px solid var(--color-border-tertiary);font-size:13px;color:var(--color-text-tertiary);max-width:72ch}
+footer b{color:var(--color-text-secondary);font-weight:500}
+footer p{margin:0 0 10px}
+
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (max-width:600px){h1{font-size:34px}.wrap{padding:0 16px 60px}.topbar-inner{padding:12px 16px}.brand .tag{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand"><span class="mark">Onsight Planning Suite</span><span class="tag">semi-retirement modeling &middot; today's dollars</span></div>
+    <button class="tbtn" id="themeBtn" aria-label="Toggle light or dark theme"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></svg><span id="themeLbl">Dark</span></button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="kicker">Financial planning workbench</p>
+    <h1>Mapping a pull-back<br>from full-time work, <em>step by step.</em></h1>
+    <p class="lede">Four linked tools that move from the ground up: start with a budget to find your true annual draw, test whether semi-retiring around 51 holds, model the detailed bridge to Social Security, and tune the allocation glide that drives it all. Everything runs in today's dollars on real (after-inflation) return assumptions.</p>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-k="budget">Budget &amp; real draw</button>
+    <button class="tab" data-k="downshift">Downshift projection</button>
+    <button class="tab" data-k="alloc">Allocation glide</button>
+  </nav>
+
+  <section class="panel on" data-k="budget">
+    <p class="what">Build spending from the bottom up to land on your <b>real draw</b> &mdash; what the portfolio must cover after income, grossed up for the taxes a withdrawal triggers. That number is the input every projection below depends on.</p>
+    <p class="hand">Tip: type your Social Security estimate into the income section to see how much the draw falls once it starts &mdash; that's the difference between your bridge-years draw and your later draw.</p>
+    <div class="toolcard"><iframe class="toolframe" id="frame-budget" title="Budget and real draw tool"></iframe></div>
+  </section>
+
+
+  <section class="panel" data-k="downshift">
+    <p class="what">The detailed version, with the <b>part-time bridge</b>, the college years (ages 54&ndash;57), and Social Security timing modeled explicitly. The first-year withdrawal stat is the early-warning light for sequence risk.</p>
+    <p class="hand">Over a 40-year horizon, a first-year withdrawal much above ~3.5% is leaning hard on good markets.</p>
+    <div class="toolcard"><iframe class="toolframe" id="frame-downshift" title="Downshift semi-retirement projection"></iframe></div>
+  </section>
+
+  <section class="panel" data-k="alloc">
+    <p class="what">A <b>Fidelity-style by-decade glide</b>: each age band has its own stock / bond / cash mix that sets that band's return and volatility, plus a net flow. The bridge years (early 50s through Social Security) are where the allocation choice earns or loses the most.</p>
+    <p class="hand">For an early downshift, sitting at the conservative end of the 50s/60s ranges defuses sequence risk; let equity drift back up once Social Security carries part of the load.</p>
+    <div class="toolcard"><iframe class="toolframe" id="frame-alloc" title="Age-band allocation projection"></iframe></div>
+  </section>
+
+  <footer>
+    <p><b>This is a planning sketch, not financial advice.</b> These tools organize and project assumptions you choose; they do not recommend a spending level, allocation, or retirement date. The output is only as sound as the inputs, and the return, volatility, and spending figures drive the result far more than the structure does.</p>
+    <p>All figures are in today's dollars and returns are real (after inflation), so spending stays constant rather than needing yearly inflation. Returns are drawn from a normal distribution, which understates real-world tail risk and single-stock risk; the models omit taxes beyond a simple gross-up, RMDs at 73, account-location effects, and Social Security survivor changes. A fee-only fiduciary &mdash; ideally one who does tax planning &mdash; can pressure-test all of it against your actual accounts.</p>
+  </footer>
+</div>
+
+<!-- ===================== TOOL TEMPLATES (inert until built into isolated frames) ===================== -->
+
+<template id="tpl-budget">
+<h2 class="sr-only">Interactive household budgeting tool.</h2>
+<style>
+.bcard{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.85rem 0.95rem}
+.bcard .lab{font-size:12px;color:var(--color-text-secondary);margin:0 0 4px}
+.bcard .val{font-size:22px;font-weight:500;margin:0}
+.bcard.hi{background:var(--color-background-info)}
+.bcard.hi .lab{color:var(--color-text-info)}
+.bcard.hi .val{color:var(--color-text-info)}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.row label{font-size:13px;color:var(--color-text-primary);flex:1}
+.row .pre{font-size:13px;color:var(--color-text-tertiary)}
+.row input{width:92px;text-align:right}
+.row .suf{font-size:12px;color:var(--color-text-tertiary);width:26px}
+.ghead{display:flex;justify-content:space-between;align-items:baseline;margin:16px 0 8px}
+.ghead .gname{font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px}
+.ghead .gdot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ghead .gtot{font-size:13px;color:var(--color-text-secondary)}
+.sec{font-size:12px;color:var(--color-text-tertiary);margin:20px 0 4px;text-transform:none}
+.barwrap{display:flex;height:26px;border-radius:var(--border-radius-md);overflow:hidden;margin:6px 0 12px}
+.barwrap div{height:100%}
+.blegend{display:flex;flex-wrap:wrap;gap:10px 16px;font-size:12px;color:var(--color-text-secondary)}
+.blegend span{display:inline-flex;align-items:center;gap:6px}
+.blegend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.note{font-size:13px;color:var(--color-text-secondary);background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px 14px;margin-top:14px}
+.note b{color:var(--color-text-primary);font-weight:500}
+.taxrow{display:flex;align-items:center;gap:10px;margin:12px 0 4px;font-size:13px;color:var(--color-text-secondary)}
+.taxrow input{width:80px;text-align:right}
+input{font-family:var(--font-sans);font-size:14px;padding:6px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
+input:focus{outline:none;box-shadow:0 0 0 2px var(--color-border-info)}
+</style>
+<div style="padding:0.5rem 0">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+    <div class="bcard"><p class="lab">Expenses / month</p><p class="val" id="mExp"></p></div>
+    <div class="bcard"><p class="lab">Expenses / year</p><p class="val" id="aExp"></p></div>
+    <div class="bcard"><p class="lab">Net draw / year</p><p class="val" id="aNet"></p></div>
+    <div class="bcard hi"><p class="lab">Real draw / year (after tax)</p><p class="val" id="aGross"></p></div>
+  </div>
+  <div class="taxrow"><span>Effective tax rate on withdrawals</span><input type="number" id="tax" min="0" max="50" step="1" value="12"><span>%</span><span style="color:var(--color-text-tertiary)">&mdash; grosses up the net draw, since portfolio withdrawals are taxed</span></div>
+  <p class="sec">EXPENSES (monthly)</p>
+  <div id="exp"></div>
+  <p class="sec">INCOME THAT OFFSETS THE DRAW (monthly)</p>
+  <div id="inc"></div>
+  <p class="sec">WHERE IT GOES</p>
+  <div class="barwrap" id="bar"></div>
+  <div class="blegend" id="leg"></div>
+  <p class="note" id="implied"></p>
+</div>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var money=function(v){return '$'+Math.round(v).toLocaleString('en-US');};
+  var GROUPS=[
+    {n:'Housing & utilities',c:'#185FA5',items:[['Mortgage / rent',1500],['Property tax & insurance',500],['Utilities',300],['Internet & phone',180],['Home & yard upkeep',250]]},
+    {n:'Food',c:'#1D9E75',items:[['Groceries',900],['Dining out',350]]},
+    {n:'Transportation',c:'#BA7517',items:[['Car payment',0],['Fuel',200],['Auto insurance',160],['Maintenance & registration',120]]},
+    {n:'Health care',c:'#D85A30',items:[['Health insurance (pre-65)',1200],['Out-of-pocket medical',250]]},
+    {n:'Other insurance',c:'#534AB7',items:[['Life & disability',120]]},
+    {n:'Family',c:'#D4537E',items:[['Kids activities / care',300]]},
+    {n:'Discretionary',c:'#639922',items:[['Travel & recreation',600],['Subscriptions & entertainment',120],['Shopping & personal',300],['Gifts & charity',200]]},
+    {n:'Other',c:'#5F5E5A',items:[['Custom 1',0],['Custom 2',0]]}
+  ];
+  var INCOME=[['Part-time / earned income',2500],['Social Security',0],['Pension / annuity',0],['Rental / other income',0]];
+  function makeRow(id,label,val){
+    var r=document.createElement('div');r.className='row';
+    r.innerHTML='<label>'+label+'</label><span class="pre">$</span><input type="number" id="'+id+'" min="0" step="25" value="'+val+'"><span class="suf">/mo</span>';
+    return r;
+  }
+  var expEl=$('exp');
+  GROUPS.forEach(function(g,gi){
+    var h=document.createElement('div');h.className='ghead';
+    h.innerHTML='<span class="gname"><span class="gdot" style="background:'+g.c+'"></span>'+g.n+'</span><span class="gtot" id="gtot'+gi+'"></span>';
+    expEl.appendChild(h);
+    g.items.forEach(function(it,ii){expEl.appendChild(makeRow('ex-'+gi+'-'+ii,it[0],it[1]));});
+  });
+  var incEl=$('inc');
+  INCOME.forEach(function(it,ii){incEl.appendChild(makeRow('inc-'+ii,it[0],it[1]));});
+  function val(id){var e=$(id);return e?Math.max(0,+e.value||0):0;}
+  function compute(){
+    var groupTot=[],totExp=0;
+    GROUPS.forEach(function(g,gi){var t=0;g.items.forEach(function(it,ii){t+=val('ex-'+gi+'-'+ii);});groupTot[gi]=t;totExp+=t;$('gtot'+gi).textContent=money(t)+'/mo';});
+    var totInc=0;INCOME.forEach(function(it,ii){totInc+=val('inc-'+ii);});
+    var monthlyNet=totExp-totInc;
+    var annualExp=totExp*12, annualNet=monthlyNet*12;
+    var tax=Math.min(50,Math.max(0,+$('tax').value||0))/100;
+    var grossAnnual=annualNet>0?annualNet/(1-tax):annualNet;
+    $('mExp').textContent=money(totExp);$('aExp').textContent=money(annualExp);$('aNet').textContent=money(annualNet);$('aGross').textContent=money(grossAnnual);
+    var bar=$('bar'),leg=$('leg');bar.innerHTML='';leg.innerHTML='';
+    GROUPS.forEach(function(g,gi){
+      if(totExp<=0||groupTot[gi]<=0)return;
+      var p=groupTot[gi]/totExp*100;
+      var seg=document.createElement('div');seg.style.width=p.toFixed(2)+'%';seg.style.background=g.c;seg.title=g.n;bar.appendChild(seg);
+      var l=document.createElement('span');l.innerHTML='<i style="background:'+g.c+'"></i>'+g.n+' &middot; '+money(groupTot[gi])+' ('+Math.round(p)+'%)';leg.appendChild(l);
+    });
+    var p35=grossAnnual>0?grossAnnual/0.035:0, p40=grossAnnual>0?grossAnnual/0.04:0;
+    $('implied').innerHTML='Your real draw of <b>'+money(grossAnnual)+'/year</b> is the negative flow to plug into the projection. To sustain it indefinitely it implies a portfolio of roughly <b>'+money(p35)+'</b> at a conservative 3.5% withdrawal rate, or <b>'+money(p40)+'</b> at 4%. Add Social Security to the income section to see how much the draw drops once it starts.';
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('input'),function(inp){inp.addEventListener('input',compute);});
+  compute();
+})();
+</script>
+</template>
+
+
+<template id="tpl-downshift">
+<h2 class="sr-only">Interactive semi-retirement projection with part-time bridge, college, and Social Security.</h2>
+<style>
+.ctrl{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.ctrl label{font-size:13px;color:var(--color-text-secondary);width:156px;flex-shrink:0}
+.ctrl input[type=range]{flex:1}
+.ctrl .out{font-size:14px;font-weight:500;width:92px;text-align:right;flex-shrink:0}
+.grp{font-size:12px;color:var(--color-text-tertiary);margin:14px 0 8px}
+.grp:first-child{margin-top:0}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.8rem 0.9rem}
+.stat .lab{font-size:12px;color:var(--color-text-secondary);margin:0 0 4px}
+.stat .val{font-size:20px;font-weight:500;margin:0}
+.leg{display:flex;gap:16px;font-size:12px;color:var(--color-text-secondary);margin:10px 0 0;flex-wrap:wrap}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:3px;border-radius:2px;display:inline-block}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--color-border-secondary)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--color-text-primary);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border:0;border-radius:50%;background:var(--color-text-primary);cursor:pointer}
+</style>
+<div style="padding:0.5rem 0">
+  <p class="grp">Now &rarr; downshift (full-time years)</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 28px">
+    <div class="ctrl"><label>Current savings</label><input type="range" id="bal" min="0" max="2000000" step="10000" value="1250000"><span class="out" id="balO"></span></div>
+    <div class="ctrl"><label>Annual saving (now)</label><input type="range" id="con" min="0" max="120000" step="2500" value="40000"><span class="out" id="conO"></span></div>
+    <div class="ctrl"><label>Downshift age</label><input type="range" id="dage" min="45" max="62" step="1" value="51"><span class="out" id="dageO"></span></div>
+  </div>
+  <p class="grp">During downshift (today&rsquo;s dollars)</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 28px">
+    <div class="ctrl"><label>Household spending</label><input type="range" id="spend" min="40000" max="180000" step="5000" value="85000"><span class="out" id="spendO"></span></div>
+    <div class="ctrl"><label>Part-time income</label><input type="range" id="pt" min="0" max="120000" step="5000" value="30000"><span class="out" id="ptO"></span></div>
+    <div class="ctrl"><label>...kept until age</label><input type="range" id="ptEnd" min="51" max="70" step="1" value="62"><span class="out" id="ptEndO"></span></div>
+    <div class="ctrl"><label>College (yr, ages 54&ndash;57)</label><input type="range" id="col" min="0" max="60000" step="5000" value="25000"><span class="out" id="colO"></span></div>
+  </div>
+  <p class="grp">Guaranteed income &amp; assumptions</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0 28px">
+    <div class="ctrl"><label>Social Security (combined)</label><input type="range" id="ss" min="0" max="80000" step="2000" value="42000"><span class="out" id="ssO"></span></div>
+    <div class="ctrl"><label>...starting at age</label><input type="range" id="ssAge" min="62" max="70" step="1" value="67"><span class="out" id="ssAgeO"></span></div>
+    <div class="ctrl"><label>Real return (after infl.)</label><input type="range" id="ret" min="0" max="9" step="0.25" value="4.5"><span class="out" id="retO"></span></div>
+    <div class="ctrl"><label>Volatility</label><input type="range" id="vol" min="0" max="25" step="0.5" value="12"><span class="out" id="volO"></span></div>
+    <div class="ctrl"><label>Plan to age</label><input type="range" id="end" min="80" max="100" step="1" value="92"><span class="out" id="endO"></span></div>
+  </div>
+  <div style="margin:1.25rem 0 0;position:relative;height:290px"><canvas id="cv"></canvas></div>
+  <div class="leg">
+    <span><i class="sw" style="background:#185FA5"></i>Deterministic</span>
+    <span><i class="sw" style="background:#1D9E75"></i>Median path</span>
+    <span><i class="sw" style="background:#1D9E75;opacity:.25;height:10px"></i>10th&ndash;90th percentile</span>
+    <span><i class="sw" style="background:#BA7517;height:10px"></i>downshift</span>
+    <span><i class="sw" style="background:#378ADD;height:10px"></i>Soc. Sec.</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:1.25rem">
+    <div class="stat"><p class="lab">Median pot at downshift</p><p class="val" id="sDown"></p></div>
+    <div class="stat"><p class="lab">First-year withdrawal</p><p class="val" id="sWR"></p></div>
+    <div class="stat"><p class="lab">Median ending balance</p><p class="val" id="sMed"></p></div>
+    <div class="stat"><p class="lab">Downside ending (10th)</p><p class="val" id="sLo"></p></div>
+    <div class="stat"><p class="lab">Chance money lasts</p><p class="val" id="sProb"></p></div>
+  </div>
+</div>
+<script>
+(function(){
+  var cs=getComputedStyle(document.documentElement);
+  var cvar=function(n,f){var x=cs.getPropertyValue(n).trim();return x||f;};
+  var cMute=cvar('--color-text-secondary','#888'), cGrid=cvar('--color-border-tertiary','rgba(0,0,0,.12)');
+  var DET='#185FA5', MC='#1D9E75', A0=41, COLLEGE_AGE=54;
+  var shortUsd=function(v){if(v<=0)return '$0';if(v>=1e6)return '$'+(v/1e6).toFixed(v>=1e7?0:1)+'M';if(v>=1e3)return '$'+Math.round(v/1e3)+'k';return '$'+Math.round(v);};
+  var usd=function(v){return '$'+Math.round(v).toLocaleString('en-US');};
+  var $=function(id){return document.getElementById(id);};
+  var ids=['bal','con','dage','spend','pt','ptEnd','col','ss','ssAge','ret','vol','end'];
+  var el={};ids.forEach(function(i){el[i]=$(i);});
+  var cvs=$('cv'),ctx=cvs.getContext('2d');
+  function randn(){var u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  function pct(a,q){var i=(a.length-1)*q,lo=Math.floor(i),hi=Math.ceil(i);return lo===hi?a[lo]:a[lo]+(a[hi]-a[lo])*(i-lo);}
+  function v(id){return +el[id].value;}
+  function netFlow(age,P){
+    if(age<P.dage) return -P.con;
+    var inc=(age<P.ptEnd?P.pt:0)+(age>=P.ssAge?P.ss:0);
+    var coll=(age>=COLLEGE_AGE&&age<COLLEGE_AGE+4)?P.col:0;
+    return (P.spend-inc+coll);
+  }
+  function simulate(){
+    var P={bal:v('bal'),con:v('con'),dage:v('dage'),spend:v('spend'),pt:v('pt'),ptEnd:v('ptEnd'),
+           col:v('col'),ss:v('ss'),ssAge:v('ssAge'),m:v('ret')/100,sd:v('vol')/100,end:v('end')};
+    var N=1200, Y=P.end-A0;
+    var by=[];for(var y=0;y<=Y;y++)by.push(new Float64Array(N));
+    for(var i=0;i<N;i++){var b=P.bal;by[0][i]=b;
+      for(var y2=1;y2<=Y;y2++){var age=A0+y2-1;
+        var r=P.m+P.sd*randn(); if(r<-0.95)r=-0.95;
+        var f=netFlow(age,P);
+        b=b*(1+r)-f; if(b<0)b=0;
+        by[y2][i]=b;
+      }}
+    var p10=[],p50=[],p90=[];
+    for(var y3=0;y3<=Y;y3++){var arr=Array.prototype.slice.call(by[y3]).sort(function(a,b){return a-b;});p10.push(pct(arr,0.1));p50.push(pct(arr,0.5));p90.push(pct(arr,0.9));}
+    var det=[],d=P.bal;det.push(d);for(var y4=1;y4<=Y;y4++){var ag=A0+y4-1;d=d*(1+P.m)-netFlow(ag,P);if(d<0)d=0;det.push(d);}
+    var fin=by[Y],cnt=0;for(var q=0;q<N;q++)if(fin[q]>0)cnt++;
+    var downIdx=P.dage-A0, medDown=p50[downIdx];
+    var firstNet=netFlow(P.dage,P);
+    var wr=medDown>0?firstNet/medDown:0;
+    return {Y:Y,A0:A0,end:P.end,p10:p10,p50:p50,p90:p90,det:det,prob:cnt/N,medDown:medDown,wr:wr,dage:P.dage,ssAge:P.ssAge};
+  }
+  var last=null;
+  function draw(D){
+    last=D;
+    var dpr=window.devicePixelRatio||1, W=cvs.parentNode.clientWidth, H=290;
+    cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+    var padL=58,padR=12,padT=22,padB=26, pw=W-padL-padR, ph=H-padT-padB, Y=D.Y;
+    var maxY=1;for(var k=0;k<=Y;k++)if(D.p90[k]>maxY)maxY=D.p90[k];if(D.det[Y]>maxY)maxY=D.det[Y];maxY*=1.05;
+    var X=function(age){return padL+(age-D.A0)/(D.end-D.A0)*pw;};
+    var Yp=function(val){return padT+ph-(val/maxY)*ph;};
+    ctx.font='11px '+cvar('--font-sans','sans-serif');
+    ctx.strokeStyle=cGrid;ctx.fillStyle=cMute;ctx.lineWidth=1;
+    for(var t=0;t<=4;t++){var val=maxY*t/4,yy=Yp(val);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(shortUsd(val),padL-8,yy);}
+    ctx.textAlign='center';ctx.textBaseline='top';
+    for(var age=D.A0;age<=D.end;age+= (D.end-D.A0>30?10:5)){ctx.fillText(age,X(age),H-padB+8);}
+    ctx.fillText(D.end,X(D.end),H-padB+8);
+    function vline(age,col,lbl){if(age<D.A0||age>D.end)return;ctx.save();ctx.setLineDash([3,3]);ctx.strokeStyle=col;ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(X(age),padT);ctx.lineTo(X(age),padT+ph);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=col;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.font='10px '+cvar('--font-sans','sans-serif');ctx.fillText(lbl,X(age),padT-3);ctx.restore();}
+    ctx.beginPath();ctx.moveTo(X(D.A0),Yp(D.p90[0]));for(var a=1;a<=Y;a++)ctx.lineTo(X(D.A0+a),Yp(D.p90[a]));for(var b2=Y;b2>=0;b2--)ctx.lineTo(X(D.A0+b2),Yp(D.p10[b2]));ctx.closePath();ctx.globalAlpha=0.16;ctx.fillStyle=MC;ctx.fill();ctx.globalAlpha=1;
+    vline(D.dage,'#BA7517','downshift');vline(D.ssAge,'#378ADD','Soc. Sec.');
+    function line(arr,col,w,dash){ctx.save();ctx.setLineDash(dash||[]);ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(X(D.A0),Yp(arr[0]));for(var i=1;i<=Y;i++)ctx.lineTo(X(D.A0+i),Yp(arr[i]));ctx.stroke();ctx.restore();}
+    line(D.det,DET,1.8,[5,4]);line(D.p50,MC,2.2);
+  }
+  function readouts(){
+    $('balO').textContent=usd(v('bal'));$('conO').textContent=usd(v('con'));$('dageO').textContent=v('dage');
+    $('spendO').textContent=usd(v('spend'));$('ptO').textContent=usd(v('pt'));$('ptEndO').textContent=v('ptEnd');
+    $('colO').textContent=v('col')===0?'none':usd(v('col'));$('ssO').textContent=usd(v('ss'));$('ssAgeO').textContent=v('ssAge');
+    $('retO').textContent=v('ret').toFixed(2)+'%';$('volO').textContent=v('vol').toFixed(1)+'%';$('endO').textContent=v('end');
+  }
+  function run(){
+    readouts();var D=simulate();draw(D);
+    $('sDown').textContent=shortUsd(D.medDown);
+    $('sWR').textContent=(D.wr*100).toFixed(1)+'%';
+    $('sMed').textContent=shortUsd(D.p50[D.Y]);
+    $('sLo').textContent=shortUsd(D.p10[D.Y]);
+    $('sProb').textContent=Math.round(D.prob*100)+'%';
+  }
+  ids.forEach(function(i){el[i].addEventListener('input',run);});
+  var rz;window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){if(last)draw(last);},120);});
+  run();
+})();
+</script>
+</template>
+
+<template id="tpl-alloc">
+<h2 class="sr-only">Interactive age-band portfolio projection modeled on Fidelity's by-decade allocation guide.</h2>
+<style>
+.ctrl{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.ctrl label{font-size:12.5px;color:var(--color-text-secondary);width:60px;flex-shrink:0}
+.ctrl.wide label{width:150px}
+.ctrl input[type=range]{flex:1}
+.ctrl .out{font-size:12.5px;font-weight:500;width:90px;text-align:right;flex-shrink:0}
+.pcard{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:0.8rem 0.9rem}
+.pcard h4{font-size:14px;font-weight:500;margin:0}
+.pcard .rng{font-size:11.5px;color:var(--color-text-tertiary);margin:2px 0 10px}
+.pcard .calc{font-size:12px;color:var(--color-text-secondary);margin:8px 0 0;padding-top:8px;border-top:0.5px solid var(--color-border-tertiary)}
+.grp{font-size:12px;color:var(--color-text-tertiary);margin:16px 0 8px}
+.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:0.8rem 0.9rem}
+.stat .lab{font-size:12px;color:var(--color-text-secondary);margin:0 0 4px}
+.stat .val{font-size:20px;font-weight:500;margin:0}
+.leg{display:flex;gap:16px;font-size:12px;color:var(--color-text-secondary);margin:10px 0 0;flex-wrap:wrap}
+.leg span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:3px;border-radius:2px;display:inline-block}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:2px;background:var(--color-border-secondary)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--color-text-primary);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:0;border-radius:50%;background:var(--color-text-primary);cursor:pointer}
+input[type=range]:disabled{opacity:.3}
+</style>
+<div style="padding:0.5rem 0">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:0 28px;margin-bottom:6px">
+    <div class="ctrl wide"><label>Starting balance</label><input type="range" id="bal" min="0" max="2000000" step="10000" value="1250000"><span class="out" id="balO"></span></div>
+    <div class="ctrl wide"><label>Plan to age</label><input type="range" id="end" min="80" max="100" step="1" value="92"><span class="out" id="endO"></span></div>
+  </div>
+  <div id="bands" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px"></div>
+  <p class="grp">Asset assumptions (real, after inflation) &middot; cash fixed at 0.5% / 1%</p>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:0 28px">
+    <div class="ctrl wide"><label>Stock real return</label><input type="range" id="rs" min="3" max="8" step="0.25" value="5.5"><span class="out" id="rsO"></span></div>
+    <div class="ctrl wide"><label>Stock volatility</label><input type="range" id="vs" min="10" max="25" step="0.5" value="17"><span class="out" id="vsO"></span></div>
+    <div class="ctrl wide"><label>Bond real return</label><input type="range" id="rb" min="0" max="4" step="0.25" value="1.75"><span class="out" id="rbO"></span></div>
+    <div class="ctrl wide"><label>Bond volatility</label><input type="range" id="vb" min="2" max="10" step="0.5" value="6"><span class="out" id="vbO"></span></div>
+  </div>
+  <div style="margin:1.1rem 0 0;position:relative;height:290px"><canvas id="cv"></canvas></div>
+  <div class="leg">
+    <span><i class="sw" style="background:#185FA5"></i>Deterministic</span>
+    <span><i class="sw" style="background:#1D9E75"></i>Median</span>
+    <span><i class="sw" style="background:#1D9E75;opacity:.25;height:10px"></i>10th&ndash;90th pct</span>
+    <span><i class="sw" style="background:#BA7517;height:10px"></i>decade breaks</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px;margin-top:1.1rem">
+    <div class="stat"><p class="lab" id="lab1"></p><p class="val" id="sB1"></p></div>
+    <div class="stat"><p class="lab" id="lab2"></p><p class="val" id="sB2"></p></div>
+    <div class="stat"><p class="lab">Median ending</p><p class="val" id="sMed"></p></div>
+    <div class="stat"><p class="lab">Downside (10th)</p><p class="val" id="sLo"></p></div>
+    <div class="stat"><p class="lab">Chance money lasts</p><p class="val" id="sProb"></p></div>
+  </div>
+</div>
+<script>
+(function(){
+  var cvar=function(n,f){var x=getComputedStyle(document.documentElement).getPropertyValue(n).trim();return x||f;};
+  var cMute=cvar('--color-text-secondary','#888'), cGrid=cvar('--color-border-tertiary','rgba(0,0,0,.12)');
+  var DET='#185FA5', MC='#1D9E75', A0=41, RC=0.5, VC=1, RHO=0.1;
+  var $=function(id){return document.getElementById(id);};
+  var BANDS=[
+    {t:'40s',hint:'Fidelity: stk 80\u2013100 \u00b7 bd 0\u201320',s:90,b:10,f:40000,end:50,emin:44,emax:55,hasEnd:true},
+    {t:'50s',hint:'Fidelity: stk 65\u201385 \u00b7 bd 15\u201335',s:75,b:25,f:-55000,end:60,emin:52,emax:66,hasEnd:true},
+    {t:'60s',hint:'Fidelity: stk 45\u201365 \u00b7 bd 30\u201350 \u00b7 csh 0\u201310',s:55,b:40,f:-35000,end:70,emin:62,emax:75,hasEnd:true},
+    {t:'70s',hint:'Fidelity: stk 30\u201350 \u00b7 bd 40\u201360 \u00b7 csh 0\u201320',s:40,b:50,f:-20000,end:80,emin:72,emax:85,hasEnd:true},
+    {t:'80s+',hint:'beyond chart \u00b7 conservative',s:30,b:55,f:-20000,hasEnd:false}
+  ];
+  var flowTxt=function(f){if(f>0)return '+$'+Math.round(f/1000)+'k save';if(f<0)return '\u2212$'+Math.round(-f/1000)+'k draw';return 'no flow';};
+  var bandsEl=$('bands');
+  BANDS.forEach(function(B,i){
+    var c=document.createElement('div');c.className='pcard';
+    var endRow=B.hasEnd?'<div class="ctrl"><label>Ends age</label><input type="range" id="e'+i+'" min="'+B.emin+'" max="'+B.emax+'" step="1" value="'+B.end+'"><span class="out" id="e'+i+'O"></span></div>':'<div class="ctrl" style="visibility:hidden"><label>x</label><input type="range" disabled><span class="out"></span></div>';
+    c.innerHTML='<h4>'+B.t+'</h4><p class="rng">'+B.hint+'</p>'+endRow+
+      '<div class="ctrl"><label>Stocks</label><input type="range" id="s'+i+'" min="0" max="100" step="5" value="'+B.s+'"><span class="out" id="s'+i+'O"></span></div>'+
+      '<div class="ctrl"><label>Bonds</label><input type="range" id="b'+i+'" min="0" max="100" step="5" value="'+B.b+'"><span class="out" id="b'+i+'O"></span></div>'+
+      '<div class="ctrl"><label>Flow/yr</label><input type="range" id="f'+i+'" min="-150000" max="120000" step="2500" value="'+B.f+'"><span class="out" id="f'+i+'O"></span></div>'+
+      '<p class="calc" id="calc'+i+'"></p>';
+    bandsEl.appendChild(c);
+  });
+  var v=function(id){var e=$(id);return e?+e.value:0;};
+  var cvs=$('cv'),ctx=cvs.getContext('2d');
+  function randn(){var u=0,w=0;while(u===0)u=Math.random();while(w===0)w=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*w);}
+  function pct(a,q){var i=(a.length-1)*q,lo=Math.floor(i),hi=Math.ceil(i);return lo===hi?a[lo]:a[lo]+(a[hi]-a[lo])*(i-lo);}
+  function blend(s,b){
+    var cash=Math.max(0,100-s-b),tot=s+b+cash;if(tot===0)tot=1;
+    var ws=s/tot,wb=b/tot,wc=cash/tot,rs=v('rs'),vs=v('vs'),rb=v('rb'),vb=v('vb');
+    var ret=ws*rs+wb*rb+wc*RC;
+    var varc=ws*ws*vs*vs+wb*wb*vb*vb+wc*wc*VC*VC+2*ws*wb*RHO*vs*vb;
+    return {cash:Math.round(cash),ret:ret,vol:Math.sqrt(varc)};
+  }
+  function model(){
+    var bounds=[];for(var i=0;i<BANDS.length-1;i++)bounds.push(v('e'+i));
+    for(var j=1;j<bounds.length;j++)if(bounds[j]<=bounds[j-1])bounds[j]=bounds[j-1]+1;
+    var end=Math.max(v('end'),bounds[bounds.length-1]+1);
+    var bl=BANDS.map(function(B,i){return blend(v('s'+i),v('b'+i));});
+    function idx(age){for(var k=0;k<bounds.length;k++)if(age<bounds[k])return k;return BANDS.length-1;}
+    return {bounds:bounds,end:end,bl:bl,
+      ret:function(age){return bl[idx(age)].ret/100;},
+      vol:function(age){return bl[idx(age)].vol/100;},
+      flow:function(age){return v('f'+idx(age));}};
+  }
+  function simulate(M){
+    var N=1200,Y=M.end-A0,bal0=v('bal');
+    var by=[];for(var y=0;y<=Y;y++)by.push(new Float64Array(N));
+    for(var i=0;i<N;i++){var bb=bal0;by[0][i]=bb;
+      for(var y2=1;y2<=Y;y2++){var age=A0+y2-1;var r=M.ret(age)+M.vol(age)*randn();if(r<-0.95)r=-0.95;bb=bb*(1+r)+M.flow(age);if(bb<0)bb=0;by[y2][i]=bb;}}
+    var p10=[],p50=[],p90=[];
+    for(var y3=0;y3<=Y;y3++){var arr=Array.prototype.slice.call(by[y3]).sort(function(a,b){return a-b;});p10.push(pct(arr,0.1));p50.push(pct(arr,0.5));p90.push(pct(arr,0.9));}
+    var det=[],d=bal0;det.push(d);for(var y4=1;y4<=Y;y4++){var ag=A0+y4-1;d=d*(1+M.ret(ag))+M.flow(ag);if(d<0)d=0;det.push(d);}
+    var fin=by[Y],cnt=0;for(var q=0;q<N;q++)if(fin[q]>0)cnt++;
+    return {Y:Y,end:M.end,bounds:M.bounds,p10:p10,p50:p50,p90:p90,det:det,prob:cnt/N};
+  }
+  var shortUsd=function(val){if(val<=0)return '$0';if(val>=1e6)return '$'+(val/1e6).toFixed(val>=1e7?0:1)+'M';if(val>=1e3)return '$'+Math.round(val/1e3)+'k';return '$'+Math.round(val);};
+  var last=null;
+  function draw(D){
+    last=D;
+    var dpr=window.devicePixelRatio||1,W=cvs.parentNode.clientWidth,H=290;
+    cvs.width=W*dpr;cvs.height=H*dpr;cvs.style.width=W+'px';cvs.style.height=H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+    var padL=58,padR=12,padT=18,padB=26,pw=W-padL-padR,ph=H-padT-padB,Y=D.Y;
+    var maxY=1;for(var k=0;k<=Y;k++)if(D.p90[k]>maxY)maxY=D.p90[k];if(D.det[Y]>maxY)maxY=D.det[Y];maxY*=1.05;
+    var X=function(age){return padL+(age-A0)/(D.end-A0)*pw;},Yp=function(val){return padT+ph-(val/maxY)*ph;};
+    ctx.font='11px '+cvar('--font-sans','sans-serif');ctx.strokeStyle=cGrid;ctx.fillStyle=cMute;ctx.lineWidth=1;
+    for(var t=0;t<=4;t++){var val=maxY*t/4,yy=Yp(val);ctx.beginPath();ctx.moveTo(padL,yy);ctx.lineTo(W-padR,yy);ctx.stroke();ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText(shortUsd(val),padL-8,yy);}
+    ctx.textAlign='center';ctx.textBaseline='top';
+    for(var age=A0;age<=D.end;age+=10){ctx.fillText(age,X(age),H-padB+8);}ctx.fillText(D.end,X(D.end),H-padB+8);
+    ctx.beginPath();ctx.moveTo(X(A0),Yp(D.p90[0]));for(var a=1;a<=Y;a++)ctx.lineTo(X(A0+a),Yp(D.p90[a]));for(var b2=Y;b2>=0;b2--)ctx.lineTo(X(A0+b2),Yp(D.p10[b2]));ctx.closePath();ctx.globalAlpha=0.16;ctx.fillStyle=MC;ctx.fill();ctx.globalAlpha=1;
+    D.bounds.forEach(function(age){ctx.save();ctx.setLineDash([3,3]);ctx.strokeStyle='#BA7517';ctx.lineWidth=1.1;ctx.beginPath();ctx.moveTo(X(age),padT);ctx.lineTo(X(age),padT+ph);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#BA7517';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.font='10px '+cvar('--font-sans','sans-serif');ctx.fillText(age,X(age),padT-2);ctx.restore();});
+    function line(arr,col,wd,dash){ctx.save();ctx.setLineDash(dash||[]);ctx.strokeStyle=col;ctx.lineWidth=wd;ctx.beginPath();ctx.moveTo(X(A0),Yp(arr[0]));for(var i=1;i<=Y;i++)ctx.lineTo(X(A0+i),Yp(arr[i]));ctx.stroke();ctx.restore();}
+    line(D.det,DET,1.8,[5,4]);line(D.p50,MC,2.2);
+  }
+  function calcLine(bl){return 'Cash '+bl.cash+'% &middot; '+bl.ret.toFixed(1)+'% return &middot; '+bl.vol.toFixed(0)+'% vol';}
+  function run(){
+    var M=model();
+    $('balO').textContent='$'+v('bal').toLocaleString('en-US');$('endO').textContent=v('end');
+    $('rsO').textContent=v('rs').toFixed(2)+'%';$('vsO').textContent=v('vs').toFixed(0)+'%';$('rbO').textContent=v('rb').toFixed(2)+'%';$('vbO').textContent=v('vb').toFixed(0)+'%';
+    BANDS.forEach(function(B,i){
+      if(B.hasEnd&&$('e'+i+'O'))$('e'+i+'O').textContent=v('e'+i);
+      $('s'+i+'O').textContent=v('s'+i)+'%';$('b'+i+'O').textContent=v('b'+i)+'%';$('f'+i+'O').textContent=flowTxt(v('f'+i));
+      $('calc'+i).innerHTML=calcLine(M.bl[i]);
+    });
+    var D=simulate(M);draw(D);
+    var b1=M.bounds[1]||M.bounds[0], b2=M.bounds[2]||M.bounds[M.bounds.length-1];
+    $('lab1').textContent='Median at '+b1;$('lab2').textContent='Median at '+b2;
+    $('sB1').textContent=shortUsd(D.p50[b1-A0]);$('sB2').textContent=shortUsd(D.p50[b2-A0]);
+    $('sMed').textContent=shortUsd(D.p50[D.Y]);$('sLo').textContent=shortUsd(D.p10[D.Y]);$('sProb').textContent=Math.round(D.prob*100)+'%';
+  }
+  var all=document.querySelectorAll('input[type=range]');
+  Array.prototype.forEach.call(all,function(inp){inp.addEventListener('input',run);});
+  var rz;window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){if(last)draw(last);},120);});
+  run();
+})();
+</script>
+</template>
+
+<!-- ===================== ORCHESTRATION ===================== -->
+<script>
+(function(){
+  var sharedStyle=document.getElementById('tpl-shared-style').innerHTML;
+  var IFRAME_RESET='<style>*{box-sizing:border-box}html,body{margin:0;padding:0}body{background:transparent;color:var(--color-text-primary);font-family:var(--font-sans);font-size:16px;line-height:1.6;padding:2px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>';
+  var fontLink='<link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">';
+  var keys=['budget','downshift','alloc'];
+  var built={};
+  var root=document.documentElement;
+  function currentTheme(){return root.getAttribute('data-theme')||'light';}
+
+  function fit(f){try{var h=f.contentDocument.body.scrollHeight;if(Math.abs((parseInt(f.style.height)||0)-h)>2)f.style.height=h+'px';}catch(e){}}
+
+  function build(key){
+    if(built[key])return;
+    var f=document.getElementById('frame-'+key);
+    var html=document.getElementById('tpl-'+key).innerHTML;
+    var doc=f.contentDocument;
+    doc.open();
+    doc.write('<!DOCTYPE html><html data-theme="'+currentTheme()+'" class="'+(currentTheme()==='dark'?'theme-dark':'')+'"><head><meta charset="utf-8">'+fontLink+sharedStyle+IFRAME_RESET+'</head><body>'+html+'</body></html>');
+    doc.close();
+    built[key]=true;
+    try{
+      var ro=new ResizeObserver(function(){fit(f);});
+      ro.observe(doc.body);
+    }catch(e){}
+    var n=0,iv=setInterval(function(){fit(f);if(++n>8)clearInterval(iv);},120);
+  }
+
+  // tab switching
+  var tabs=document.querySelectorAll('.tab');
+  var panels=document.querySelectorAll('.panel');
+  function kick(f){if(!f)return;try{f.contentWindow.dispatchEvent(new Event('resize'));}catch(e){}fit(f);}
+  function activate(key){
+    tabs.forEach(function(t){t.classList.toggle('on',t.getAttribute('data-k')===key);});
+    panels.forEach(function(p){p.classList.toggle('on',p.getAttribute('data-k')===key);});
+    build(key);
+    var f=document.getElementById('frame-'+key);
+    requestAnimationFrame(function(){requestAnimationFrame(function(){kick(f);});});
+    [180,420].forEach(function(ms){setTimeout(function(){kick(f);},ms);});
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){activate(t.getAttribute('data-k'));});});
+
+  // theme toggle
+  var sun='<circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"></path>';
+  var moon='<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>';
+  function applyTheme(t){
+    root.setAttribute('data-theme',t);
+    document.getElementById('themeIcon').innerHTML=(t==='dark'?sun:moon);
+    document.getElementById('themeLbl').textContent=(t==='dark'?'Light':'Dark');
+    keys.forEach(function(key){
+      if(!built[key])return;
+      var f=document.getElementById('frame-'+key);
+      try{
+        f.contentDocument.documentElement.setAttribute('data-theme',t);
+        f.contentDocument.documentElement.className=(t==='dark'?'theme-dark':'');
+        f.contentWindow.dispatchEvent(new Event('resize'));
+        setTimeout(function(){fit(f);},60);
+      }catch(e){}
+    });
+  }
+  document.getElementById('themeBtn').addEventListener('click',function(){
+    applyTheme(currentTheme()==='dark'?'light':'dark');
+  });
+
+  // init theme from OS preference
+  var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+  applyTheme(prefersDark?'dark':'light');
+
+  // build first tab, refit on window resize
+  activate('budget');
+  var rz;window.addEventListener('resize',function(){clearTimeout(rz);rz=setTimeout(function(){
+    keys.forEach(function(key){if(built[key])fit(document.getElementById('frame-'+key));});
+  },150);});
+})();
+</script>
+</body>
+</html>
