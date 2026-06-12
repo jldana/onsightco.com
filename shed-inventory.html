@@ -150,6 +150,21 @@
   .statusmsg.ok{display:block;background:var(--teal-soft);color:var(--teal-deep)}
   .statusmsg.err{display:block;background:#FAE2DC;color:var(--grade-d)}
 
+  .scanbtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border:1.5px dashed var(--teal);background:var(--teal-soft);color:var(--teal-deep);border-radius:var(--radius);padding:14px;font-size:14.5px;font-weight:700;font-family:var(--sans)}
+  .scanbtn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .scanbtn:disabled{opacity:.6}
+  .scanhelp{font-size:12px;color:var(--ink-2);line-height:1.45;margin:7px 2px 0}
+  .scanstat{display:none;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--teal-deep);background:var(--teal-soft);border-radius:10px;padding:10px 12px;margin-top:10px}
+  .scanstat.show{display:flex}
+  .scanstat.err{color:var(--grade-d);background:#FAE2DC}
+  .spin{width:15px;height:15px;border:2.5px solid rgba(18,83,72,.25);border-top-color:var(--teal-deep);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .stagerow{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:11px 12px;margin-bottom:8px}
+  .stagerow input.stg-name{font-weight:700;margin-bottom:8px;padding:9px 11px;font-size:14.5px}
+  .stagerow .stg-controls{display:flex;gap:7px}
+  .stagerow select{font-size:13px;padding:8px 26px 8px 10px}
+  .stagerow .stg-del{background:none;border:none;color:var(--grade-d);font-size:12.5px;font-weight:700;margin-top:8px;padding:2px 0;font-family:var(--sans)}
+
   .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 86px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:99px;opacity:0;transition:all .25s;z-index:99;white-space:nowrap;pointer-events:none;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -244,6 +259,8 @@
 
 <div class="toast" id="toast"></div>
 <div id="printarea"></div>
+<input type="file" id="camInput" accept="image/*" capture="environment" style="display:none">
+<canvas id="dsCanvas" style="display:none"></canvas>
 
 <script>
 /* ============ taxonomy ============ */
@@ -265,7 +282,7 @@ const CACHE_KEY='shed-cache-v2';
 const CFG_KEY='shed-gh-cfg';
 
 let DB={boxes:[],items:[]};
-let cfg={owner:'',repo:'',path:'inventory.json',branch:'main',token:''};
+let cfg={owner:'',repo:'',path:'inventory.json',branch:'main',token:'',aiKey:''};
 let remoteSha=null,connected=false,syncTimer=null;
 
 /* ============ seed ============ */
@@ -478,31 +495,76 @@ function openBoxSheet(boxId){
       <div class="stat in"><div class="n">${its.length-out}</div><div class="l">In shed</div></div>
       <div class="stat out"><div class="n">${out}</div><div class="l">Out</div></div></div>
     <button class="btn btn-primary btn-sm" id="addItemBtn">+ Add item to this box</button>
+    <button class="scanbtn" id="boxScan" type="button" style="margin-top:9px">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Scan to add items
+    </button>
+    <div class="scanstat" id="boxScanStat"></div>
     <div class="section-h">Contents</div>
     <div id="sheetItems">${its.length?its.map(i=>itemCard(i,false)).join(''):'<div class="empty">Empty box. Add the first item.</div>'}</div>`);
   new QRCode($('#qrTarget'),{text:'OSBOX:'+b.id,width:140,height:140,correctLevel:QRCode.CorrectLevel.M});
   bindCards($('#sheetItems'),b.id);
   $('#addItemBtn').onclick=()=>openItemForm(b.id,null,b.id);
+  $('#boxScan').onclick=()=>runScan($('#boxScanStat'),items=>{
+    items.forEach(s=>DB.items.push({id:uid(),boxId:b.id,name:s.name,type:s.type,category:s.category,grade:s.grade,qty:1,status:'in',checkedOutTo:'',checkedOutAt:null,notes:''}));
+    save();refreshAll();openBoxSheet(b.id);toast(`Added ${items.length} item${items.length===1?'':'s'} — tap any to fix`);
+  });
   $('#printOne').onclick=()=>printLabels([b]);
   $('#editBox').onclick=()=>openBoxForm(b);
 }
 
+function renderStage(stage){
+  const el=$('#stageList');if(!el)return;
+  if(!stage.length){el.innerHTML='';return}
+  el.innerHTML=`<div class="section-h">Items to add (${stage.length})</div>`+stage.map((s,i)=>`
+    <div class="stagerow">
+      <input class="stg-name" data-i="${i}" value="${esc(s.name)}">
+      <div class="stg-controls">
+        <select class="stg-type" data-i="${i}">${TYPES.map(t=>`<option ${t===s.type?'selected':''}>${t}</option>`).join('')}</select>
+        <select class="stg-cat" data-i="${i}">${catOptions(s.type,s.category)}</select>
+        <select class="stg-grade" data-i="${i}" style="max-width:62px">${GRADES.map(g=>`<option ${g===s.grade?'selected':''}>${g}</option>`).join('')}</select>
+      </div>
+      <button class="stg-del" data-i="${i}">Remove</button>
+    </div>`).join('');
+  el.querySelectorAll('.stg-name').forEach(n=>n.oninput=()=>stage[+n.dataset.i].name=n.value);
+  el.querySelectorAll('.stg-type').forEach(s=>s.onchange=()=>{const i=+s.dataset.i;stage[i].type=s.value;stage[i].category=(CATS[s.value]||['Other'])[0];renderStage(stage)});
+  el.querySelectorAll('.stg-cat').forEach(s=>s.onchange=()=>stage[+s.dataset.i].category=s.value);
+  el.querySelectorAll('.stg-grade').forEach(s=>s.onchange=()=>stage[+s.dataset.i].grade=s.value);
+  el.querySelectorAll('.stg-del').forEach(b=>b.onclick=()=>{stage.splice(+b.dataset.i,1);renderStage(stage)});
+}
 function openBoxForm(existing){
   const isNew=!existing,id=existing?existing.id:nextBoxId();
+  const stage=[];
   openSheet(isNew?'New box':'Edit '+existing.id,`
     <div class="field"><label>Box code</label>
       <input id="bfId" value="${esc(id)}" ${isNew?'':'disabled'} style="font-family:var(--mono);text-transform:uppercase" autocapitalize="characters">
       ${isNew?'<div class="hint">This is what the QR label encodes. Keep it short.</div>':''}</div>
     <div class="field"><label>Name</label><input id="bfName" value="${esc(existing?existing.name:'')}" placeholder="e.g. Winter / Mountaineering"></div>
     <div class="field"><label>Location</label><input id="bfLoc" value="${esc(existing?existing.location:'')}" placeholder="e.g. Shed — top shelf"></div>
-    <button class="btn btn-primary" id="bfSave">${isNew?'Create box':'Save changes'}</button>
+    ${isNew?`
+    <button class="scanbtn" id="bfScan" type="button">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      Scan contents with camera
+    </button>
+    <div class="scanhelp">Snap a photo of what's in the box — AI lists the items and you tidy them up before saving.</div>
+    <div class="scanstat" id="bfScanStat"></div>
+    <div id="stageList"></div>
+    <button class="btn btn-ghost btn-sm" id="bfAddManual" type="button" style="margin-top:6px">+ Add an item by hand</button>
+    `:''}
+    <button class="btn btn-primary" id="bfSave" style="margin-top:12px">${isNew?'Create box':'Save changes'}</button>
     ${isNew?'':'<button class="btn btn-ghost btn-sm" id="bfDelete" style="margin-top:9px;color:var(--grade-d)">Delete box & contents</button>'}`);
+  if(isNew){
+    $('#bfScan').onclick=()=>runScan($('#bfScanStat'),items=>{items.forEach(it=>stage.push(it));renderStage(stage)});
+    $('#bfAddManual').onclick=()=>{stage.push({name:'',type:'Gear',category:'Climbing',grade:'A',qty:1,notes:''});renderStage(stage)};
+  }
   $('#bfSave').onclick=()=>{
     const name=$('#bfName').value.trim();if(!name){toast('Give the box a name');return}
     if(isNew){const newId=($('#bfId').value.trim().toUpperCase())||nextBoxId();
       if(boxById(newId)){toast(newId+' already exists');return}
       DB.boxes.push({id:newId,name,location:$('#bfLoc').value.trim(),notes:'',createdAt:Date.now()});
+      stage.filter(s=>s.name.trim()).forEach(s=>DB.items.push({id:uid(),boxId:newId,name:s.name.trim(),type:s.type,category:s.category,grade:s.grade,qty:s.qty||1,status:'in',checkedOutTo:'',checkedOutAt:null,notes:s.notes||''}));
       save();refreshAll();openBoxSheet(newId);
+      const n=stage.filter(s=>s.name.trim()).length;toast(n?`Box created with ${n} item${n===1?'':'s'}`:'Box created');
     }else{existing.name=name;existing.location=$('#bfLoc').value.trim();save();refreshAll();openBoxSheet(existing.id)}
   };
   if(!isNew)$('#bfDelete').onclick=()=>{
@@ -557,7 +619,81 @@ function openItemForm(boxId,item,returnBox){
   };
 }
 
-/* ============ sync & backup sheet ============ */
+/* ============ AI photo cataloguing ============ */
+const VISION_PROMPT=`You are cataloguing the contents of a storage box for an outdoor-gear, tree-care and construction company. Look at the photo and list every distinct, identifiable item you can see. For each item return:
+- "name": concise, include brand if legible (e.g. "Black Diamond ice axe")
+- "type": exactly one of "Gear", "Tools", "Materials"
+- "category": one value matching the type:
+  Gear: Climbing, Mountaineering, Biking, Paddleboarding, Snow, Camping, Safety, Cordage, Other
+  Tools: Hand tools, Power tools, Measuring, Cutting, Fastening, Other
+  Materials: Lumber, Fasteners, Electrical, Plumbing, Fittings, Adhesives, Hardware, Other
+- "grade": condition best-guess, "A" (like new) to "D" (worn)
+Only list things you can actually see. Do not invent items. Respond with ONLY a JSON array and nothing else — no prose, no markdown fences. If nothing is identifiable, return [].
+Example: [{"name":"Black Diamond ice axe","type":"Gear","category":"Mountaineering","grade":"A"}]`;
+
+function pickImage(){
+  return new Promise(resolve=>{
+    const inp=$('#camInput');inp.value='';
+    const onChange=()=>{inp.removeEventListener('change',onChange);const f=inp.files&&inp.files[0];resolve(f||null)};
+    inp.addEventListener('change',onChange);inp.click();
+  });
+}
+function downscale(file,max=1100){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      let{width:w,height:h}=img;const scale=Math.min(1,max/Math.max(w,h));
+      w=Math.round(w*scale);h=Math.round(h*scale);
+      const c=$('#dsCanvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      URL.revokeObjectURL(url);
+      const dataUrl=c.toDataURL('image/jpeg',0.85);
+      resolve({b64:dataUrl.split(',')[1],mediaType:'image/jpeg'});
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Could not read that image'))};
+    img.src=url;
+  });
+}
+async function aiDetect(b64,mediaType){
+  const body={model:'claude-sonnet-4-6',max_tokens:1024,
+    messages:[{role:'user',content:[
+      {type:'image',source:{type:'base64',media_type:mediaType,data:b64}},
+      {type:'text',text:VISION_PROMPT}
+    ]}]};
+  const headers={'Content-Type':'application/json'};
+  if(cfg.aiKey){headers['x-api-key']=cfg.aiKey;headers['anthropic-version']='2023-06-01';headers['anthropic-dangerous-direct-browser-access']='true';}
+  const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers,body:JSON.stringify(body)});
+  if(res.status===401)throw new Error('Add your Anthropic API key in the sync settings (tap the pill up top) to use scanning.');
+  if(!res.ok)throw new Error('AI request failed ('+res.status+')');
+  const data=await res.json();
+  const text=(data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('\n');
+  let raw=text.replace(/```json|```/g,'').trim();
+  const a=raw.indexOf('['),z=raw.lastIndexOf(']');
+  if(a>=0&&z>a)raw=raw.slice(a,z+1);
+  let arr;try{arr=JSON.parse(raw)}catch(e){throw new Error('Could not read the AI response — try another photo')}
+  if(!Array.isArray(arr))return[];
+  return arr.map(o=>{
+    let type=TYPES.includes(o.type)?o.type:'Gear';
+    let category=(CATS[type]||[]).includes(o.category)?o.category:'Other';
+    let grade=GRADES.includes(o.grade)?o.grade:'B';
+    return{name:String(o.name||'Unnamed item').slice(0,80),type,category,grade,qty:1,notes:''};
+  }).filter(o=>o.name);
+}
+/* run capture+detect, report status via a .scanstat element, call onItems(arr) */
+async function runScan(statEl,onItems){
+  const file=await pickImage();
+  if(!file)return;
+  statEl.className='scanstat show';statEl.innerHTML='<span class="spin"></span>Reading photo…';
+  try{
+    const img=await downscale(file);
+    statEl.innerHTML='<span class="spin"></span>Identifying items…';
+    const items=await aiDetect(img.b64,img.mediaType);
+    statEl.classList.remove('show');
+    if(!items.length){statEl.className='scanstat show err';statEl.textContent='No items recognised — try a clearer, closer photo.';return}
+    onItems(items);
+  }catch(e){statEl.className='scanstat show err';statEl.textContent=e.message}
+}
+
+
 function openSyncSheet(){
   openSheet('Sync & backup',`
     <div class="syncnote">
@@ -575,6 +711,10 @@ function openSyncSheet(){
       <div class="hint">github.com → Settings → Developer settings → Fine-grained tokens. Stays on this device only.</div></div>
     <button class="btn btn-primary" id="ghConnect">${connected?'Reconnect & pull':'Connect & load'}</button>
     ${connected?'<button class="btn btn-ghost btn-sm" id="ghPush" style="margin-top:9px">Push local copy now</button><button class="btn btn-ghost btn-sm" id="ghDisconnect" style="margin-top:9px;color:var(--grade-d)">Disconnect this device</button>':''}
+    <div class="section-h">AI scanning</div>
+    <div class="field"><label>Anthropic API key</label><input id="aiKey" type="password" value="${esc(cfg.aiKey)}" placeholder="sk-ant-…" autocomplete="off" autocapitalize="off">
+      <div class="hint">Powers “Scan contents”. Get one at console.anthropic.com → API keys. Stored on this device only; each scan costs a fraction of a cent.</div>
+      <button class="btn btn-ghost btn-sm" id="aiSave" style="margin-top:9px">Save key</button></div>
     <div class="section-h">Backup</div>
     <div class="btnrow"><button class="btn btn-ghost btn-sm" id="expJson">Export JSON</button><button class="btn btn-ghost btn-sm" id="expCsv">Export CSV</button></div>`);
   const stat=$('#syncStatus');
@@ -582,6 +722,7 @@ function openSyncSheet(){
   $('#ghConnect').onclick=async()=>{
     cfg.owner=$('#ghOwner').value.trim();cfg.repo=$('#ghRepo').value.trim();
     cfg.path=$('#ghPath').value.trim()||'inventory.json';cfg.branch=$('#ghBranch').value.trim()||'main';cfg.token=$('#ghToken').value.trim();
+    cfg.aiKey=$('#aiKey').value.trim();
     if(!cfg.owner||!cfg.repo||!cfg.token){show('Fill in owner, repo, and token.',false);return}
     show('Connecting…',true);
     try{
@@ -597,6 +738,7 @@ function openSyncSheet(){
   }
   $('#expJson').onclick=()=>download('shed-inventory.json',JSON.stringify(DB,null,2),'application/json');
   $('#expCsv').onclick=()=>download('shed-inventory.csv',toCSV(),'text/csv');
+  $('#aiSave').onclick=()=>{cfg.aiKey=$('#aiKey').value.trim();saveCfg();show(cfg.aiKey?'AI key saved on this device.':'AI key cleared.',true)};
 }
 $('#syncPill').onclick=openSyncSheet;
 
