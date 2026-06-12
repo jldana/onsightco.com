@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Onsight Shed</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#EFF3EF;--surface:#FFFFFF;--ink:#15211C;--ink-2:#5A6B63;--line:#D9E2DC;
+    --teal:#1E7A6B;--teal-deep:#125348;--blaze:#E0641F;--blaze-soft:#FCE9DD;--teal-soft:#E0EFEB;
+    --grade-a:#1E7A6B;--grade-b:#5E8C3A;--grade-c:#C98A1B;--grade-d:#C04A2B;
+    --radius:14px;
+    --mono:ui-monospace,'SF Mono',SFMono-Regular,Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:var(--sans);background:var(--bg);color:var(--ink);overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+  #app{display:flex;flex-direction:column;height:100dvh}
+
+  header{padding:calc(env(safe-area-inset-top) + 12px) 18px 10px;background:var(--bg);flex-shrink:0}
+  .header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .brand{display:flex;align-items:baseline;gap:8px}
+  .brand h1{font-size:21px;font-weight:800;letter-spacing:-.4px}
+  .brand .shed{font-family:var(--mono);font-size:11px;color:var(--teal);letter-spacing:1.5px;text-transform:uppercase;border:1px solid var(--teal);border-radius:4px;padding:1px 6px}
+  .header-sub{font-size:12px;color:var(--ink-2);margin-top:2px}
+  .syncpill{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 11px;font-size:11.5px;font-weight:700;color:var(--ink-2);flex-shrink:0;font-family:var(--sans)}
+  .syncpill .sdot{width:8px;height:8px;border-radius:50%;background:#A9B6AF}
+  .syncpill.saved{color:var(--teal-deep);border-color:var(--teal)}.syncpill.saved .sdot{background:var(--teal)}
+  .syncpill.syncing .sdot{background:var(--blaze);animation:pulse 1s infinite}
+  .syncpill.error{color:var(--grade-d);border-color:var(--grade-d)}.syncpill.error .sdot{background:var(--grade-d)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 16px 24px}
+  .tabpane{display:none}.tabpane.active{display:block}
+
+  nav{flex-shrink:0;display:flex;background:var(--surface);border-top:1px solid var(--line);padding:6px 8px calc(env(safe-area-inset-bottom) + 6px)}
+  nav button{flex:1;background:none;border:none;font-family:var(--sans);display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0 4px;color:var(--ink-2);font-size:10.5px;font-weight:600;border-radius:10px}
+  nav button svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  nav button.on{color:var(--teal)}
+  .navwrap{position:relative;flex:1;display:flex}
+  .navdot{position:absolute;top:2px;right:calc(50% - 18px);min-width:16px;height:16px;border-radius:8px;background:var(--blaze);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px}
+
+  input,select,textarea{font-family:var(--sans);font-size:16px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;width:100%;outline:none;-webkit-appearance:none;appearance:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--teal)}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235A6B63' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+  .searchwrap{position:relative;margin:6px 0 10px}
+  .searchwrap svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:18px;height:18px;stroke:var(--ink-2);fill:none;stroke-width:2;stroke-linecap:round}
+  .searchwrap input{padding-left:40px}
+
+  .chiprow{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .chiprow::-webkit-scrollbar{display:none}
+  .chip{flex-shrink:0;border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--ink-2)}
+  .chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .chip.blaze.on{background:var(--blaze);border-color:var(--blaze)}
+
+  .count-line{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.5px;text-transform:uppercase;margin:2px 2px 8px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;margin-bottom:9px}
+  .card.tappable{cursor:pointer}
+  .item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .item-name{font-size:15.5px;font-weight:700;line-height:1.25}
+  .item-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px;align-items:center}
+  .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.4px;padding:3px 7px;border-radius:5px;background:var(--bg);color:var(--ink-2);text-transform:uppercase}
+  .tag.box{background:var(--teal-soft);color:var(--teal-deep);font-weight:700}
+  .tag.type{background:#EEEAF6;color:#5B4B86;font-weight:700}
+  .gradechip{font-family:var(--mono);font-size:10.5px;font-weight:700;color:#fff;padding:3px 7px;border-radius:5px}
+  .status-out{font-size:11px;font-weight:700;color:var(--blaze);display:flex;align-items:center;gap:4px;margin-top:7px}
+  .status-out .dot{width:7px;height:7px;border-radius:50%;background:var(--blaze)}
+  .io-btn{flex-shrink:0;border:none;border-radius:10px;font-size:12.5px;font-weight:700;padding:9px 13px;font-family:var(--sans)}
+  .io-btn.out{background:var(--blaze-soft);color:var(--blaze)}
+  .io-btn.in{background:var(--teal-soft);color:var(--teal-deep)}
+  .empty{text-align:center;color:var(--ink-2);padding:48px 20px;font-size:14px;line-height:1.5}
+  .empty strong{color:var(--ink)}
+
+  .boxcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:10px;overflow:hidden}
+  .boxcard-main{display:flex;align-items:center;gap:12px;padding:14px;width:100%;background:none;border:none;text-align:left;font-family:var(--sans)}
+  .boxplate{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--teal-deep);background:var(--teal-soft);border:1.5px solid var(--teal);padding:8px 10px;border-radius:8px;flex-shrink:0;letter-spacing:.5px;clip-path:polygon(0 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%)}
+  .boxcard-info{flex:1;min-width:0}
+  .boxcard-name{font-size:15.5px;font-weight:700;color:var(--ink)}
+  .boxcard-sub{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+  .boxcard-count{font-family:var(--mono);font-size:12px;color:var(--ink-2);flex-shrink:0}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:var(--radius);padding:15px;font-size:15.5px;font-weight:700;font-family:var(--sans)}
+  .btn-primary{background:var(--teal);color:#fff}
+  .btn-blaze{background:var(--blaze);color:#fff}
+  .btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+  .btn-sm{padding:11px;font-size:14px}
+  .btnrow{display:flex;gap:9px;margin-top:10px}
+  .btnrow .btn{margin-top:0}
+
+  .scanstage{position:relative;border-radius:18px;overflow:hidden;background:#0E1512;aspect-ratio:3/4;margin-top:8px}
+  .scanstage video{width:100%;height:100%;object-fit:cover}
+  .finder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .finder .frame{width:62%;aspect-ratio:1;position:relative}
+  .finder .frame span{position:absolute;width:30px;height:30px;border:3.5px solid #fff;opacity:.95}
+  .finder .frame span:nth-child(1){top:0;left:0;border-right:none;border-bottom:none;border-radius:8px 0 0 0}
+  .finder .frame span:nth-child(2){top:0;right:0;border-left:none;border-bottom:none;border-radius:0 8px 0 0}
+  .finder .frame span:nth-child(3){bottom:0;left:0;border-right:none;border-top:none;border-radius:0 0 0 8px}
+  .finder .frame span:nth-child(4){bottom:0;right:0;border-left:none;border-top:none;border-radius:0 0 8px 0}
+  .scan-hint{position:absolute;bottom:14px;left:0;right:0;text-align:center;color:#fff;font-size:13px;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+  .scan-idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#9FB5AC;text-align:center;padding:24px}
+  .scan-idle svg{width:54px;height:54px;stroke:#3A5048;fill:none;stroke-width:1.5;stroke-linecap:round}
+  .scan-idle p{font-size:13.5px;line-height:1.5;max-width:240px}
+  .scan-idle .btn{width:auto;padding:13px 26px}
+  .divider-or{display:flex;align-items:center;gap:12px;color:var(--ink-2);font-size:12px;font-weight:600;margin:18px 0 10px;text-transform:uppercase;letter-spacing:1px}
+  .divider-or::before,.divider-or::after{content:"";flex:1;height:1px;background:var(--line)}
+  .manualrow{display:flex;gap:9px}
+  .manualrow input{flex:1;font-family:var(--mono);text-transform:uppercase}
+  .manualrow .btn{width:auto;padding:0 20px}
+
+  .sheet-veil{position:fixed;inset:0;background:rgba(14,21,18,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .2s}
+  .sheet-veil.show{opacity:1;pointer-events:auto}
+  .sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;background:var(--bg);border-radius:20px 20px 0 0;max-height:92dvh;display:flex;flex-direction:column;transform:translateY(105%);transition:transform .28s cubic-bezier(.32,.72,.25,1)}
+  .sheet.show{transform:translateY(0)}
+  .sheet-head{padding:10px 18px 12px;flex-shrink:0;border-bottom:1px solid var(--line)}
+  .grab{width:38px;height:4.5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+  .sheet-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .sheet-title{font-size:18px;font-weight:800;letter-spacing:-.3px}
+  .sheet-close{background:var(--surface);border:1px solid var(--line);border-radius:50%;width:32px;height:32px;font-size:16px;color:var(--ink-2);flex-shrink:0}
+  .sheet-body{overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 18px calc(env(safe-area-inset-bottom) + 22px)}
+  .field{margin-bottom:12px}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+  .field-row{display:flex;gap:10px}
+  .field-row .field{flex:1}
+  .field .hint{font-size:11.5px;color:var(--ink-2);font-weight:400;text-transform:none;letter-spacing:0;margin-top:5px;line-height:1.4}
+
+  .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:4px;gap:4px}
+  .seg button{flex:1;border:none;background:none;font-family:var(--mono);font-weight:700;font-size:14px;padding:10px 0;border-radius:10px;color:var(--ink-2)}
+  .seg button.on{color:#fff}
+
+  .qrpanel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:14px}
+  .qrpanel .qrbox{padding:10px;background:#fff;border-radius:10px}
+  .qrpanel .qrcode-label{font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:1px;color:var(--ink)}
+  .qrpanel .qrcode-sub{font-size:12.5px;color:var(--ink-2);text-align:center}
+
+  .boxstats{display:flex;gap:9px;margin-bottom:14px}
+  .stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:11px;text-align:center}
+  .stat .n{font-size:20px;font-weight:800;font-family:var(--mono)}
+  .stat .l{font-size:10.5px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.6px;margin-top:2px;font-weight:700}
+  .stat.out .n{color:var(--blaze)}.stat.in .n{color:var(--teal)}
+  .section-h{font-size:12px;font-weight:800;color:var(--ink-2);text-transform:uppercase;letter-spacing:1px;margin:16px 2px 8px}
+
+  .syncnote{font-size:12.5px;color:var(--ink-2);line-height:1.5;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:13px 14px;margin-bottom:14px}
+  .syncnote b{color:var(--ink)}
+  .statusmsg{font-size:13px;font-weight:600;padding:10px 12px;border-radius:10px;margin-bottom:12px;display:none}
+  .statusmsg.ok{display:block;background:var(--teal-soft);color:var(--teal-deep)}
+  .statusmsg.err{display:block;background:#FAE2DC;color:var(--grade-d)}
+
+  .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 86px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13.5px;font-weight:600;padding:11px 18px;border-radius:99px;opacity:0;transition:all .25s;z-index:99;white-space:nowrap;pointer-events:none;max-width:88vw;overflow:hidden;text-overflow:ellipsis}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .fab{position:fixed;right:18px;bottom:calc(env(safe-area-inset-bottom) + 84px);z-index:30;width:54px;height:54px;border-radius:50%;border:none;background:var(--teal);color:#fff;font-size:28px;font-weight:400;box-shadow:0 5px 16px rgba(18,83,72,.35);display:none;align-items:center;justify-content:center;line-height:1}
+  .fab.show{display:flex}
+
+  #printarea{display:none}
+  @media print{
+    body *{display:none !important}
+    body{background:#fff}
+    #printarea{display:block !important;padding:0}
+    #printarea *{display:revert !important}
+    .plabel{display:inline-flex !important;flex-direction:column;align-items:center;gap:6px;border:1.5px dashed #999;border-radius:10px;padding:18px 22px;margin:8px;page-break-inside:avoid;font-family:var(--sans)}
+    .plabel img{width:150px !important;height:150px !important}
+    .plabel .pcode{font-family:var(--mono);font-weight:700;font-size:18px;letter-spacing:1px}
+    .plabel .pname{font-size:13px;color:#333}
+    .plabel .pbrand{font-size:10px;color:#777;letter-spacing:2px;text-transform:uppercase}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-top">
+      <div>
+        <div class="brand"><h1>Onsight</h1><span class="shed">Shed</span></div>
+        <div class="header-sub" id="headerSub">Loading…</div>
+      </div>
+      <button class="syncpill" id="syncPill"><span class="sdot"></span><span id="syncLabel">Local</span></button>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="tabpane active" id="pane-search">
+      <div class="searchwrap">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="search" id="q" placeholder="Search items, boxes, notes…" autocomplete="off">
+      </div>
+      <div class="chiprow" id="filterChips"></div>
+      <div class="count-line" id="resultCount"></div>
+      <div id="results"></div>
+    </div>
+
+    <div class="tabpane" id="pane-scan">
+      <div class="scanstage" id="scanStage">
+        <video id="video" playsinline muted></video>
+        <div class="scan-idle" id="scanIdle">
+          <svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="8" y="8" width="8" height="8" rx="1"/></svg>
+          <p>Point the camera at a box label to pull up its contents.</p>
+          <button class="btn btn-primary" id="startScan">Start camera</button>
+        </div>
+        <div class="finder" id="finder" style="display:none"><div class="frame"><span></span><span></span><span></span><span></span></div></div>
+        <div class="scan-hint" id="scanHint" style="display:none">Looking for a box code…</div>
+      </div>
+      <div class="divider-or">or enter code</div>
+      <div class="manualrow">
+        <input type="text" id="manualCode" placeholder="B-001" autocomplete="off" autocapitalize="characters">
+        <button class="btn btn-primary" id="manualGo">Open</button>
+      </div>
+      <canvas id="scanCanvas" style="display:none"></canvas>
+    </div>
+
+    <div class="tabpane" id="pane-boxes">
+      <div id="boxList"></div>
+      <button class="btn btn-ghost btn-sm" id="printAllBtn" style="margin-top:4px">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9V3h12v6M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v7H6z"/></svg>
+        Print all box labels
+      </button>
+    </div>
+
+    <div class="tabpane" id="pane-out">
+      <div class="count-line" id="outCount"></div>
+      <div id="outList"></div>
+    </div>
+  </main>
+
+  <button class="fab" id="fab">+</button>
+
+  <nav>
+    <div class="navwrap"><button data-tab="search" class="on"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search</button></div>
+    <div class="navwrap"><button data-tab="scan"><svg viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2M7 12h10"/></svg>Scan</button></div>
+    <div class="navwrap"><button data-tab="boxes"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/></svg>Boxes</button></div>
+    <div class="navwrap"><button data-tab="out"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>Out</button><div class="navdot" id="outDot" style="display:none">0</div></div>
+  </nav>
+</div>
+
+<div class="sheet-veil" id="veil"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-head"><div class="grab"></div><div class="sheet-title-row"><div class="sheet-title" id="sheetTitle"></div><button class="sheet-close" id="sheetClose">✕</button></div></div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="printarea"></div>
+
+<script>
+/* ============ taxonomy ============ */
+const GRADES=['A','B','C','D'];
+const GRADE_COLORS={A:'var(--grade-a)',B:'var(--grade-b)',C:'var(--grade-c)',D:'var(--grade-d)'};
+const TYPES=['Gear','Tools','Materials'];
+const CATS={
+  Gear:['Climbing','Mountaineering','Biking','Paddleboarding','Snow','Camping','Safety','Cordage','Other'],
+  Tools:['Hand tools','Power tools','Measuring','Cutting','Fastening','Other'],
+  Materials:['Lumber','Fasteners','Electrical','Plumbing','Fittings','Adhesives','Hardware','Other']
+};
+
+/* ============ resilient device storage ============ */
+const LS=(()=>{
+  try{const k='__t';localStorage.setItem(k,'1');localStorage.removeItem(k);return localStorage}
+  catch(e){const m={};return{getItem:k=>k in m?m[k]:null,setItem:(k,v)=>{m[k]=String(v)},removeItem:k=>{delete m[k]}}}
+})();
+const CACHE_KEY='shed-cache-v2';
+const CFG_KEY='shed-gh-cfg';
+
+let DB={boxes:[],items:[]};
+let cfg={owner:'',repo:'',path:'inventory.json',branch:'main',token:''};
+let remoteSha=null,connected=false,syncTimer=null;
+
+/* ============ seed ============ */
+function uid(){return 'i'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4)}
+function it(boxId,name,type,category,grade,notes){return{id:uid(),boxId,name,type,category,grade,qty:1,status:'in',checkedOutTo:'',checkedOutAt:null,notes}}
+function seed(){return{
+  boxes:[
+    {id:'B-001',name:'Winter / Mountaineering',location:'Shed — top shelf',notes:'',createdAt:Date.now()},
+    {id:'B-002',name:'Cordage & Hardware',location:'Shed — bin rack',notes:'',createdAt:Date.now()},
+    {id:'B-003',name:'Shop Tools & Materials',location:'Shed — workbench',notes:'',createdAt:Date.now()}
+  ],
+  items:[
+    it('B-001','Black Diamond ice axe (green)','Gear','Mountaineering','A','Pick + spike guards on'),
+    it('B-001','BD crampons in orange bag','Gear','Mountaineering','B',''),
+    it('B-001','Snowshoes + Tyrolia bag','Gear','Snow','B',''),
+    it('B-001','NoCry knee pads','Gear','Safety','A',''),
+    it('B-002','Utility cord 50 ft (green)','Gear','Cordage','A','~400 lb rated'),
+    it('B-002','Utility cord (blue)','Gear','Cordage','A',''),
+    it('B-003','Impact driver','Tools','Power tools','B',''),
+    it('B-003','2.5" deck screws','Materials','Fasteners','A','~1 lb left')
+  ]
+};}
+
+/* ============ persistence ============ */
+function cacheLocal(){try{LS.setItem(CACHE_KEY,JSON.stringify(DB))}catch(e){}}
+function loadCache(){try{const v=LS.getItem(CACHE_KEY);if(v)return JSON.parse(v)}catch(e){}return null}
+function saveCfg(){try{LS.setItem(CFG_KEY,JSON.stringify(cfg))}catch(e){}}
+function loadCfg(){try{const v=LS.getItem(CFG_KEY);if(v)Object.assign(cfg,JSON.parse(v))}catch(e){}}
+
+function save(){
+  cacheLocal();
+  if(connected){setSync('syncing');clearTimeout(syncTimer);syncTimer=setTimeout(pushToGitHub,1400)}
+}
+
+/* ============ GitHub API ============ */
+function ghHeaders(){return{'Authorization':'Bearer '+cfg.token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'}}
+function utf8ToB64(s){return btoa(unescape(encodeURIComponent(s)))}
+function b64ToUtf8(b){return decodeURIComponent(escape(atob(b.replace(/\s/g,''))))}
+function contentsUrl(){return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}`}
+
+async function pullFromGitHub(){
+  const res=await fetch(contentsUrl()+`?ref=${encodeURIComponent(cfg.branch)}`,{headers:ghHeaders()});
+  if(res.status===404){remoteSha=null;return{exists:false}}
+  if(res.status===401)throw new Error('Token rejected (401). Check the token and its repo access.');
+  if(res.status===403)throw new Error('Forbidden (403). Token needs Contents read/write, or you hit a rate limit.');
+  if(res.status===404)throw new Error('Repo or file not found (404). Check owner/repo/branch.');
+  if(!res.ok)throw new Error('GitHub error '+res.status);
+  const data=await res.json();remoteSha=data.sha;
+  let parsed=null;try{parsed=JSON.parse(b64ToUtf8(data.content))}catch(e){parsed=null}
+  return{exists:true,data:parsed};
+}
+async function pushToGitHub(){
+  if(!connected)return;
+  try{
+    setSync('syncing');
+    const body={message:`shed: update ${new Date().toISOString()}`,content:utf8ToB64(JSON.stringify(DB)),branch:cfg.branch};
+    if(remoteSha)body.sha=remoteSha;
+    let res=await fetch(contentsUrl(),{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
+    if(res.status===409||res.status===422){
+      try{const r=await pullFromGitHub();if(r.exists&&remoteSha)body.sha=remoteSha;else delete body.sha}catch(e){}
+      res=await fetch(contentsUrl(),{method:'PUT',headers:ghHeaders(),body:JSON.stringify(body)});
+    }
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();remoteSha=data.content.sha;setSync('saved');
+  }catch(e){setSync('error');toast('Sync failed — saved on device')}
+}
+function setSync(state){
+  const pill=$('#syncPill'),lab=$('#syncLabel');
+  pill.className='syncpill '+(state==='off'?'':state);
+  lab.textContent={off:'Local only',syncing:'Syncing…',saved:'Synced',error:'Sync error'}[state]||'Local';
+}
+
+/* ============ helpers ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2200)}
+function boxById(id){return DB.boxes.find(b=>b.id===id)}
+function nextBoxId(){let n=1;DB.boxes.forEach(b=>{const m=b.id.match(/^B-(\d+)$/);if(m)n=Math.max(n,parseInt(m[1])+1)});return 'B-'+String(n).padStart(3,'0')}
+function ago(ts){if(!ts)return'';const d=Math.floor((Date.now()-ts)/86400000);if(d===0)return'today';if(d===1)return'yesterday';return d+' days ago'}
+
+/* ============ filters ============ */
+let filters={status:'all',type:null,grade:null,boxId:null};
+function renderFilters(){
+  const c=$('#filterChips');
+  const mk=(label,on,cls,f)=>`<button class="chip ${cls} ${on?'on':''}" data-f="${f}">${label}</button>`;
+  let h=mk('All',filters.status==='all'&&!filters.type&&!filters.grade&&!filters.boxId,'','clear');
+  h+=mk('Checked out',filters.status==='out','blaze','status:out');
+  h+=mk('In shed',filters.status==='in','','status:in');
+  TYPES.forEach(t=>h+=mk(t,filters.type===t,'','type:'+t));
+  GRADES.forEach(g=>h+=mk('Grade '+g,filters.grade===g,'','grade:'+g));
+  c.innerHTML=h;
+  c.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{
+    const f=ch.dataset.f;
+    if(f==='clear')filters={status:'all',type:null,grade:null,boxId:null};
+    else if(f.startsWith('status:')){const v=f.slice(7);filters.status=filters.status===v?'all':v}
+    else if(f.startsWith('type:')){const v=f.slice(5);filters.type=filters.type===v?null:v}
+    else if(f.startsWith('grade:')){const v=f.slice(6);filters.grade=filters.grade===v?null:v}
+    renderFilters();renderResults();
+  });
+}
+function matchedItems(){
+  const q=$('#q').value.trim().toLowerCase();
+  return DB.items.filter(i=>{
+    if(filters.status!=='all'&&i.status!==filters.status)return false;
+    if(filters.type&&i.type!==filters.type)return false;
+    if(filters.grade&&i.grade!==filters.grade)return false;
+    if(filters.boxId&&i.boxId!==filters.boxId)return false;
+    if(q){const b=boxById(i.boxId);
+      const hay=(i.name+' '+i.type+' '+i.category+' '+(i.notes||'')+' '+i.boxId+' '+(b?b.name+' '+b.location:'')+' '+(i.checkedOutTo||'')).toLowerCase();
+      if(!hay.includes(q))return false;}
+    return true;
+  });
+}
+
+/* ============ cards ============ */
+function itemCard(i,showBox=true){
+  const out=i.status==='out';
+  return `<div class="card tappable" data-edit="${i.id}">
+    <div class="item-top">
+      <div style="flex:1;min-width:0">
+        <div class="item-name">${esc(i.name)}${i.qty>1?` <span style="color:var(--ink-2);font-weight:600">×${i.qty}</span>`:''}</div>
+        <div class="item-meta">
+          ${showBox?`<span class="tag box" data-openbox="${esc(i.boxId)}">${esc(i.boxId)}</span>`:''}
+          <span class="tag type">${esc(i.type||'Gear')}</span>
+          <span class="gradechip" style="background:${GRADE_COLORS[i.grade]||'var(--ink-2)'}">${esc(i.grade)}</span>
+          <span class="tag">${esc(i.category)}</span>
+          ${i.notes?`<span class="tag" style="text-transform:none">${esc(i.notes)}</span>`:''}
+        </div>
+        ${out?`<div class="status-out"><span class="dot"></span>Out${i.checkedOutTo?' — '+esc(i.checkedOutTo):''}${i.checkedOutAt?' · '+ago(i.checkedOutAt):''}</div>`:''}
+      </div>
+      <button class="io-btn ${out?'in':'out'}" data-io="${i.id}">${out?'Check in':'Check out'}</button>
+    </div>
+  </div>`;
+}
+function bindCards(root,returnBox){
+  root.querySelectorAll('[data-io]').forEach(b=>b.onclick=e=>{e.stopPropagation();toggleIO(b.dataset.io,returnBox)});
+  root.querySelectorAll('[data-openbox]').forEach(t=>t.onclick=e=>{e.stopPropagation();openBoxSheet(t.dataset.openbox)});
+  root.querySelectorAll('[data-edit]').forEach(card=>card.onclick=()=>openItemForm(null,DB.items.find(x=>x.id===card.dataset.edit),returnBox));
+}
+
+/* ============ renderers ============ */
+function refreshAll(){renderHeader();renderFilters();renderResults();renderBoxes();renderOut()}
+function renderHeader(){
+  const out=DB.items.filter(i=>i.status==='out').length;
+  $('#headerSub').textContent=`${DB.items.length} items · ${DB.boxes.length} boxes · ${out} out`;
+  const dot=$('#outDot');dot.style.display=out?'flex':'none';dot.textContent=out;
+}
+function renderResults(){
+  const list=matchedItems();
+  $('#resultCount').textContent=list.length+' item'+(list.length===1?'':'s');
+  const r=$('#results');
+  r.innerHTML=list.length?list.map(i=>itemCard(i)).join(''):`<div class="empty"><strong>Nothing matches.</strong><br>Try clearing a filter, or add items from the Boxes tab.</div>`;
+  bindCards(r,null);
+}
+function renderBoxes(){
+  const el=$('#boxList');
+  if(!DB.boxes.length){el.innerHTML=`<div class="empty"><strong>No boxes yet.</strong><br>Tap + to create your first box.</div>`;return}
+  el.innerHTML=DB.boxes.map(b=>{
+    const its=DB.items.filter(i=>i.boxId===b.id);const out=its.filter(i=>i.status==='out').length;
+    return `<div class="boxcard"><button class="boxcard-main" data-box="${esc(b.id)}">
+      <span class="boxplate">${esc(b.id)}</span>
+      <span class="boxcard-info"><span class="boxcard-name">${esc(b.name)}</span>
+      <span class="boxcard-sub" style="display:block">${esc(b.location||'No location')}${out?` · <span style="color:var(--blaze);font-weight:700">${out} out</span>`:''}</span></span>
+      <span class="boxcard-count">${its.length}</span></button></div>`;
+  }).join('');
+  el.querySelectorAll('[data-box]').forEach(btn=>btn.onclick=()=>openBoxSheet(btn.dataset.box));
+}
+function renderOut(){
+  const list=DB.items.filter(i=>i.status==='out');
+  $('#outCount').textContent=list.length+' item'+(list.length===1?'':'s')+' checked out';
+  const el=$('#outList');
+  el.innerHTML=list.length?list.map(i=>itemCard(i)).join(''):`<div class="empty"><strong>Everything is in the shed.</strong><br>Items you check out show up here.</div>`;
+  bindCards(el,null);
+}
+
+/* ============ check in/out ============ */
+function toggleIO(itemId,returnBox){
+  const i=DB.items.find(x=>x.id===itemId);if(!i)return;
+  if(i.status==='in'){
+    openSheet('Check out',`
+      <div class="card"><div class="item-name">${esc(i.name)}</div>
+        <div class="item-meta"><span class="tag box">${esc(i.boxId)}</span><span class="tag type">${esc(i.type)}</span><span class="tag">${esc(i.category)}</span></div></div>
+      <div class="field" style="margin-top:14px"><label>Who / where to (optional)</label>
+        <input id="ioWho" placeholder="e.g. Jacob — Vining St job" autocomplete="off"></div>
+      <button class="btn btn-blaze" id="ioConfirm">Check out</button>`);
+    $('#ioConfirm').onclick=()=>{i.status='out';i.checkedOutTo=$('#ioWho').value.trim();i.checkedOutAt=Date.now();
+      save();closeSheet();refreshAll();if(returnBox)openBoxSheet(returnBox);toast('Checked out — '+i.name)};
+  }else{
+    i.status='in';i.checkedOutTo='';i.checkedOutAt=null;
+    save();refreshAll();if(returnBox)openBoxSheet(returnBox);toast('Checked in — '+i.name);
+  }
+}
+
+/* ============ sheet ============ */
+function openSheet(title,html){$('#sheetTitle').textContent=title;$('#sheetBody').innerHTML=html;$('#veil').classList.add('show');$('#sheet').classList.add('show');$('#sheetBody').scrollTop=0}
+function closeSheet(){$('#veil').classList.remove('show');$('#sheet').classList.remove('show')}
+$('#veil').onclick=closeSheet;$('#sheetClose').onclick=closeSheet;
+
+function openBoxSheet(boxId){
+  const b=boxById(boxId);if(!b){toast('No box found for '+boxId);return}
+  const its=DB.items.filter(i=>i.boxId===b.id);const out=its.filter(i=>i.status==='out').length;
+  openSheet(b.name,`
+    <div class="qrpanel"><div class="qrbox" id="qrTarget"></div>
+      <div class="qrcode-label">${esc(b.id)}</div><div class="qrcode-sub">${esc(b.location||'')}</div>
+      <div class="btnrow" style="width:100%">
+        <button class="btn btn-ghost btn-sm" id="printOne">Print label</button>
+        <button class="btn btn-ghost btn-sm" id="editBox">Edit box</button></div></div>
+    <div class="boxstats">
+      <div class="stat"><div class="n">${its.length}</div><div class="l">Items</div></div>
+      <div class="stat in"><div class="n">${its.length-out}</div><div class="l">In shed</div></div>
+      <div class="stat out"><div class="n">${out}</div><div class="l">Out</div></div></div>
+    <button class="btn btn-primary btn-sm" id="addItemBtn">+ Add item to this box</button>
+    <div class="section-h">Contents</div>
+    <div id="sheetItems">${its.length?its.map(i=>itemCard(i,false)).join(''):'<div class="empty">Empty box. Add the first item.</div>'}</div>`);
+  new QRCode($('#qrTarget'),{text:'OSBOX:'+b.id,width:140,height:140,correctLevel:QRCode.CorrectLevel.M});
+  bindCards($('#sheetItems'),b.id);
+  $('#addItemBtn').onclick=()=>openItemForm(b.id,null,b.id);
+  $('#printOne').onclick=()=>printLabels([b]);
+  $('#editBox').onclick=()=>openBoxForm(b);
+}
+
+function openBoxForm(existing){
+  const isNew=!existing,id=existing?existing.id:nextBoxId();
+  openSheet(isNew?'New box':'Edit '+existing.id,`
+    <div class="field"><label>Box code</label>
+      <input id="bfId" value="${esc(id)}" ${isNew?'':'disabled'} style="font-family:var(--mono);text-transform:uppercase" autocapitalize="characters">
+      ${isNew?'<div class="hint">This is what the QR label encodes. Keep it short.</div>':''}</div>
+    <div class="field"><label>Name</label><input id="bfName" value="${esc(existing?existing.name:'')}" placeholder="e.g. Winter / Mountaineering"></div>
+    <div class="field"><label>Location</label><input id="bfLoc" value="${esc(existing?existing.location:'')}" placeholder="e.g. Shed — top shelf"></div>
+    <button class="btn btn-primary" id="bfSave">${isNew?'Create box':'Save changes'}</button>
+    ${isNew?'':'<button class="btn btn-ghost btn-sm" id="bfDelete" style="margin-top:9px;color:var(--grade-d)">Delete box & contents</button>'}`);
+  $('#bfSave').onclick=()=>{
+    const name=$('#bfName').value.trim();if(!name){toast('Give the box a name');return}
+    if(isNew){const newId=($('#bfId').value.trim().toUpperCase())||nextBoxId();
+      if(boxById(newId)){toast(newId+' already exists');return}
+      DB.boxes.push({id:newId,name,location:$('#bfLoc').value.trim(),notes:'',createdAt:Date.now()});
+      save();refreshAll();openBoxSheet(newId);
+    }else{existing.name=name;existing.location=$('#bfLoc').value.trim();save();refreshAll();openBoxSheet(existing.id)}
+  };
+  if(!isNew)$('#bfDelete').onclick=()=>{
+    const n=DB.items.filter(i=>i.boxId===existing.id).length;
+    if(!confirm('Delete '+existing.id+' and all '+n+' items in it?'))return;
+    DB.items=DB.items.filter(i=>i.boxId!==existing.id);DB.boxes=DB.boxes.filter(b=>b.id!==existing.id);
+    save();closeSheet();refreshAll();toast('Deleted '+existing.id);
+  };
+}
+
+/* ============ item form (add + edit) ============ */
+function catOptions(type,sel){return (CATS[type]||CATS.Gear).map(c=>`<option ${c===sel?'selected':''}>${esc(c)}</option>`).join('')}
+function openItemForm(boxId,item,returnBox){
+  const editing=!!item;
+  const curType=editing?(item.type||'Gear'):'Gear';
+  const curBox=editing?item.boxId:boxId;
+  let grade=editing?item.grade:'A';
+  const boxOpts=DB.boxes.map(b=>`<option value="${esc(b.id)}" ${b.id===curBox?'selected':''}>${esc(b.id)} — ${esc(b.name)}</option>`).join('');
+  openSheet(editing?'Edit item':'Add item — '+boxId,`
+    <div class="field"><label>Item name</label><input id="ifName" value="${editing?esc(item.name):''}" placeholder="e.g. Black Diamond ice axe"></div>
+    <div class="field"><label>Box</label><select id="ifBox" ${editing?'':'disabled'}>${boxOpts}</select>${editing?'<div class="hint">Change this to move the item to another box.</div>':''}</div>
+    <div class="field-row">
+      <div class="field"><label>Type</label><select id="ifType">${TYPES.map(t=>`<option ${t===curType?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="field"><label>Category</label><select id="ifCat">${catOptions(curType,editing?item.category:undefined)}</select></div></div>
+    <div class="field-row">
+      <div class="field"><label>Grade</label><div class="seg" id="ifGrade">${GRADES.map(g=>`<button data-g="${g}" ${g===grade?'class="on" style="background:'+GRADE_COLORS[g]+'"':''}>${g}</button>`).join('')}</div></div>
+      <div class="field" style="max-width:90px"><label>Qty</label><input id="ifQty" type="number" inputmode="numeric" value="${editing?item.qty:1}" min="1"></div></div>
+    <div class="field"><label>Notes (optional)</label><input id="ifNotes" value="${editing?esc(item.notes||''):''}" placeholder="serial, size, missing parts…"></div>
+    <button class="btn btn-primary" id="ifSave">${editing?'Save changes':'Add item'}</button>
+    ${editing?'<button class="btn btn-ghost btn-sm" id="ifDelete" style="margin-top:9px;color:var(--grade-d)">Delete item</button>':''}`);
+  $('#ifType').onchange=()=>{$('#ifCat').innerHTML=catOptions($('#ifType').value)};
+  $('#ifGrade').querySelectorAll('button').forEach(btn=>btn.onclick=()=>{
+    grade=btn.dataset.g;
+    $('#ifGrade').querySelectorAll('button').forEach(x=>{x.classList.remove('on');x.style.background=''});
+    btn.classList.add('on');btn.style.background=GRADE_COLORS[grade];
+  });
+  $('#ifSave').onclick=()=>{
+    const name=$('#ifName').value.trim();if(!name){toast('Name the item');return}
+    const data={name,type:$('#ifType').value,category:$('#ifCat').value,grade,qty:Math.max(1,parseInt($('#ifQty').value)||1),notes:$('#ifNotes').value.trim()};
+    if(editing){
+      Object.assign(item,data);item.boxId=$('#ifBox').value;save();refreshAll();
+      if(returnBox)openBoxSheet(item.boxId);else closeSheet();toast('Saved — '+name);
+    }else{
+      DB.items.push({id:uid(),boxId,...data,status:'in',checkedOutTo:'',checkedOutAt:null});
+      save();refreshAll();openBoxSheet(boxId);toast('Added — '+name);
+    }
+  };
+  if(editing)$('#ifDelete').onclick=()=>{
+    if(!confirm('Delete "'+item.name+'"?'))return;
+    DB.items=DB.items.filter(x=>x.id!==item.id);save();refreshAll();
+    if(returnBox)openBoxSheet(returnBox);else closeSheet();toast('Deleted item');
+  };
+}
+
+/* ============ sync & backup sheet ============ */
+function openSyncSheet(){
+  openSheet('Sync & backup',`
+    <div class="syncnote">
+      Your inventory lives in a <b>private GitHub repo</b>. The app code stays public-safe — the access token is stored only on this device and is never written into the page.
+      ${connected?'<br><br><b>Connected</b> to '+esc(cfg.owner+'/'+cfg.repo)+'.':'<br><br>Create a <b>private</b> repo, then a <b>fine-grained token</b> scoped to only that repo (Contents → Read &amp; write). Connect below.'}
+    </div>
+    <div id="syncStatus" class="statusmsg"></div>
+    <div class="field-row">
+      <div class="field"><label>Owner</label><input id="ghOwner" value="${esc(cfg.owner)}" placeholder="jldana" autocapitalize="off"></div>
+      <div class="field"><label>Repo</label><input id="ghRepo" value="${esc(cfg.repo)}" placeholder="shed-data" autocapitalize="off"></div></div>
+    <div class="field-row">
+      <div class="field"><label>File path</label><input id="ghPath" value="${esc(cfg.path)}" placeholder="inventory.json" autocapitalize="off"></div>
+      <div class="field" style="max-width:108px"><label>Branch</label><input id="ghBranch" value="${esc(cfg.branch)}" placeholder="main" autocapitalize="off"></div></div>
+    <div class="field"><label>Access token</label><input id="ghToken" type="password" value="${esc(cfg.token)}" placeholder="github_pat_…" autocomplete="off" autocapitalize="off">
+      <div class="hint">github.com → Settings → Developer settings → Fine-grained tokens. Stays on this device only.</div></div>
+    <button class="btn btn-primary" id="ghConnect">${connected?'Reconnect & pull':'Connect & load'}</button>
+    ${connected?'<button class="btn btn-ghost btn-sm" id="ghPush" style="margin-top:9px">Push local copy now</button><button class="btn btn-ghost btn-sm" id="ghDisconnect" style="margin-top:9px;color:var(--grade-d)">Disconnect this device</button>':''}
+    <div class="section-h">Backup</div>
+    <div class="btnrow"><button class="btn btn-ghost btn-sm" id="expJson">Export JSON</button><button class="btn btn-ghost btn-sm" id="expCsv">Export CSV</button></div>`);
+  const stat=$('#syncStatus');
+  const show=(msg,ok)=>{stat.textContent=msg;stat.className='statusmsg '+(ok?'ok':'err')};
+  $('#ghConnect').onclick=async()=>{
+    cfg.owner=$('#ghOwner').value.trim();cfg.repo=$('#ghRepo').value.trim();
+    cfg.path=$('#ghPath').value.trim()||'inventory.json';cfg.branch=$('#ghBranch').value.trim()||'main';cfg.token=$('#ghToken').value.trim();
+    if(!cfg.owner||!cfg.repo||!cfg.token){show('Fill in owner, repo, and token.',false);return}
+    show('Connecting…',true);
+    try{
+      const r=await pullFromGitHub();connected=true;saveCfg();setSync('saved');
+      if(r.exists&&r.data&&Array.isArray(r.data.boxes)&&(r.data.boxes.length||r.data.items.length)){
+        DB=r.data;cacheLocal();refreshAll();show('Loaded '+DB.items.length+' items from GitHub.',true);
+      }else{await pushToGitHub();show('Repo was empty — pushed your local copy up.',true)}
+    }catch(e){connected=false;setSync('off');show(e.message,false)}
+  };
+  if(connected){
+    $('#ghPush').onclick=async()=>{show('Pushing…',true);await pushToGitHub();show('Pushed local copy to GitHub.',true)};
+    $('#ghDisconnect').onclick=()=>{connected=false;cfg.token='';remoteSha=null;saveCfg();setSync('off');show('Disconnected. Data stays on this device.',true)};
+  }
+  $('#expJson').onclick=()=>download('shed-inventory.json',JSON.stringify(DB,null,2),'application/json');
+  $('#expCsv').onclick=()=>download('shed-inventory.csv',toCSV(),'text/csv');
+}
+$('#syncPill').onclick=openSyncSheet;
+
+/* ============ export ============ */
+function download(name,text,mime){
+  try{const blob=new Blob([text],{type:mime});const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},500);
+  }catch(e){toast('Export not supported here')}
+}
+function toCSV(){
+  const head=['box','box_name','item','type','category','grade','qty','status','checked_out_to','notes'];
+  const rows=DB.items.map(i=>{const b=boxById(i.boxId)||{};
+    return [i.boxId,b.name||'',i.name,i.type||'',i.category||'',i.grade||'',i.qty,i.status,i.checkedOutTo||'',i.notes||'']
+      .map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')});
+  return [head.join(','),...rows].join('\n');
+}
+
+/* ============ scanning ============ */
+let scanning=false,videoStream=null,rafId=null;
+function parseCode(raw){if(!raw)return null;
+  const m=String(raw).trim().toUpperCase().match(/(?:OSBOX:)?\s*(B-\d{1,4}|[A-Z0-9-]{2,12})/);
+  if(!m)return null;let code=m[1];if(/^B\d+$/.test(code))code='B-'+code.slice(1);return code;}
+async function startScan(){
+  if(scanning)return;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('Camera unavailable — use the code field below');return}
+  try{videoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false})}
+  catch(e){toast('Camera blocked — enter the box code below instead');return}
+  scanning=true;const v=$('#video');v.srcObject=videoStream;await v.play();
+  $('#scanIdle').style.display='none';$('#finder').style.display='flex';$('#scanHint').style.display='block';tick();
+}
+function stopScan(){scanning=false;if(rafId)cancelAnimationFrame(rafId);
+  if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null}
+  $('#video').srcObject=null;$('#scanIdle').style.display='flex';$('#finder').style.display='none';$('#scanHint').style.display='none';}
+function tick(){
+  if(!scanning)return;const v=$('#video');
+  if(v.readyState===v.HAVE_ENOUGH_DATA){
+    const c=$('#scanCanvas');c.width=v.videoWidth;c.height=v.videoHeight;
+    const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(v,0,0,c.width,c.height);
+    const img=ctx.getImageData(0,0,c.width,c.height);
+    const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+    if(code&&code.data){const boxId=parseCode(code.data);
+      if(boxId&&boxById(boxId)){if(navigator.vibrate)navigator.vibrate(60);stopScan();openBoxSheet(boxId);return}}
+  }
+  rafId=requestAnimationFrame(tick);
+}
+$('#startScan').onclick=startScan;
+$('#manualGo').onclick=()=>{const code=parseCode($('#manualCode').value);
+  if(!code){toast('Enter a box code like B-001');return}
+  if(!boxById(code)){toast('No box found for '+code);return}
+  $('#manualCode').value='';openBoxSheet(code);};
+$('#manualCode').addEventListener('keydown',e=>{if(e.key==='Enter')$('#manualGo').click()});
+
+/* ============ printing ============ */
+function printLabels(boxes){
+  const pa=$('#printarea');pa.innerHTML='';
+  boxes.forEach(b=>{
+    const wrap=document.createElement('div');wrap.className='plabel';
+    const qrHolder=document.createElement('div');wrap.appendChild(qrHolder);
+    const code=document.createElement('div');code.className='pcode';code.textContent=b.id;
+    const name=document.createElement('div');name.className='pname';name.textContent=b.name;
+    const brand=document.createElement('div');brand.className='pbrand';brand.textContent='Onsight Shed';
+    wrap.appendChild(code);wrap.appendChild(name);wrap.appendChild(brand);pa.appendChild(wrap);
+    new QRCode(qrHolder,{text:'OSBOX:'+b.id,width:300,height:300,correctLevel:QRCode.CorrectLevel.M});
+  });
+  setTimeout(()=>window.print(),350);
+}
+$('#printAllBtn').onclick=()=>{if(!DB.boxes.length){toast('No boxes to print');return}printLabels(DB.boxes)};
+
+/* ============ tabs ============ */
+let activeTab='search';
+document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>{
+  activeTab=btn.dataset.tab;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b===btn));
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+activeTab));
+  $('#fab').classList.toggle('show',activeTab==='boxes');
+  if(activeTab!=='scan')stopScan();$('#main').scrollTop=0;
+});
+$('#fab').onclick=()=>openBoxForm(null);
+$('#q').addEventListener('input',renderResults);
+
+/* ============ boot ============ */
+(async()=>{
+  loadCfg();
+  const cached=loadCache();
+  DB=cached||seed();
+  if(!cached)cacheLocal();
+  refreshAll();
+  if(cfg.owner&&cfg.repo&&cfg.token){
+    setSync('syncing');
+    try{
+      const r=await pullFromGitHub();connected=true;
+      if(r.exists&&r.data&&Array.isArray(r.data.boxes)){DB=r.data;cacheLocal();refreshAll()}
+      else{await pushToGitHub()}
+      setSync('saved');
+    }catch(e){connected=false;setSync('error');toast('GitHub sync failed — working locally')}
+  }else{setSync('off')}
+})();
+</script>
+</body>
+</html>
