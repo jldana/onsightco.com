@@ -304,4 +304,34 @@
   <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     function handleSubmit(e) {
       e.preventDefault();
-      document.getElementById('
+      const form = e.target;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+
+      const formData = new FormData(form);
+
+      fetch('https://formspree.io/f/mrpgqboa', {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(function (response) {
+          if (response.ok) {
+            form.style.display = 'none';
+            document.getElementById('formSuccess').classList.add('show');
+          } else {
+            throw new Error('Form submission failed');
+          }
+        })
+        .catch(function () {
+          alert('Sorry, something went wrong sending your message. Please email info@onsightco.com or call (303) 859-8658 directly.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        });
+    }
+  </script>
+  <script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "b81318ca52cb4e33a2dfe07b17144e11"}'></script>
+</body>
+</html>
