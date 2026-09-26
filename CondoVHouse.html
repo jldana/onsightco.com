@@ -106,6 +106,9 @@ th{font-weight:600;font-size:12px;color:var(--ink2)}
 td{font-family:var(--mono);font-variant-numeric:tabular-nums}
 td:first-child{font-family:var(--sans)}
 tr.em td{font-weight:600;border-bottom-color:var(--muted)}
+.toggle{display:inline-flex;border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;margin-bottom:12px}
+.toggle button{border:0;background:transparent;padding:5px 12px;border-radius:6px;color:var(--ink2)}
+.toggle button[aria-pressed=true]{background:var(--track);color:var(--ink);font-weight:600}
 .foot{color:var(--muted);font-size:12px;margin-top:16px;max-width:80ch}
 .results{display:flex;flex-direction:column;gap:16px;min-width:0}
 </style>
@@ -140,8 +143,9 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
       </section>
 
       <section class="panel">
-        <h3 class="card-title">Net cost of owning, by year you sell</h3>
-        <p class="card-note">Everything you spend that you do not get back. For owning that is interest, taxes, insurance, HOA, upkeep, utilities, closing and selling costs, and what your down payment could have earned elsewhere, minus appreciation. For renting it is rent, renters insurance and utilities. Hover or drag across the chart.</p>
+        <h3 class="card-title" id="chart-title">Net cost, by year you sell</h3>
+        <div class="toggle" role="group" aria-label="Chart measure"><button type="button" id="m-net" aria-pressed="true">Net cost</button><button type="button" id="m-cash" aria-pressed="false">Cash in hand</button></div>
+        <p class="card-note" id="chart-note">Everything you spend that you do not get back. For owning that is interest, taxes, insurance, HOA, upkeep, utilities, closing and selling costs, and what your down payment could have earned elsewhere, minus appreciation. For renting it is rent, renters insurance and utilities. Hover or drag across the chart.</p>
         <div class="legend"><span class="k"><i style="background:var(--condo)"></i>Condo</span><span class="k"><i style="background:var(--house)"></i>House</span><span class="k"><i style="background:var(--rent)"></i>Rent</span></div>
         <div class="chartbox" id="chartbox"></div>
       </section>
@@ -183,7 +187,8 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
     {k:'rinc',label:'Rent increase (per year)',min:0,max:10,step:0.25,fmt:'pct'},
     {k:'rins',label:'Renters insurance (per month)',min:0,max:100,step:5,fmt:'usd'},
     {k:'util',label:'Utilities (per month)',min:0,max:600,step:10,fmt:'usd'},
-    {k:'dep',label:'Security deposit',min:0,max:3,step:1,fmt:'mo'}
+    {k:'dep',label:'Security deposit',min:0,max:3,step:1,fmt:'mo'},
+    {k:'sav',label:'Savings invested instead of a down payment',min:0,max:500000,step:5000,fmt:'usd'}
   ];
   var sharedFields=[
     {k:'rate',label:'Mortgage rate',min:2,max:10,step:0.125,fmt:'pct'},
@@ -197,7 +202,7 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
   var DEF={
     condo:{price:550000,down:20,tax:0.6,ins:900,hoa:450,maint:0.5,util:200,appr:3},
     house:{price:850000,down:20,tax:0.6,ins:2200,hoa:0,maint:1.0,util:380,appr:3.5},
-    rent:{rent:2800,rinc:3.5,rins:25,util:180,dep:1},
+    rent:{rent:2800,rinc:3.5,rins:25,util:180,dep:1,sav:130000},
     shared:{rate:6.5,term:30,years:10,close:3,sell:6,inv:4,infl:3}
   };
   var S={condo:{},house:{},rent:{},shared:{}};
@@ -240,7 +245,7 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
     var r=s.rate/1200,n=s.term*12;
     var pay=loan<=0?0:(r===0?loan/n:loan*r/(1-Math.pow(1+r,-n)));
     var bal=loan,infl=s.infl/100,app=p.appr/100,cumRun=0,close=s.close/100*price;
-    var yrs=[{y:0,net:close+s.sell/100*price}];
+    var yrs=[{y:0,net:close+s.sell/100*price,cash:down-s.sell/100*price}];
     for(var y=1;y<=H;y++){
       var valStart=price*Math.pow(1+app,y-1),valEnd=price*Math.pow(1+app,y),f=Math.pow(1+infl,y-1);
       var int=0,prin=0,pmi=0;
@@ -257,7 +262,7 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
       cumRun+=run;
       var sellC=s.sell/100*valEnd,opp=down*(Math.pow(1+s.inv/100,y)-1);
       var net=cumRun+close+sellC-(valEnd-price)+opp;
-      yrs.push({y:y,int:int,prin:prin,tax:tax,ins:ins+pmi,hoa:hoa,maint:maint,util:util,run:run,net:net,bal:bal,valEnd:valEnd,sellC:sellC,cumRun:cumRun,opp:opp});
+      yrs.push({y:y,int:int,prin:prin,tax:tax,ins:ins+pmi,hoa:hoa,maint:maint,util:util,run:run,net:net,bal:bal,valEnd:valEnd,sellC:sellC,cash:valEnd-bal-sellC,cumRun:cumRun,opp:opp});
     }
     var y1=yrs[1],last=yrs[H];
     return {down:down,loan:loan,pay:pay,close:close,yrs:yrs,y1:y1,last:last,
@@ -266,11 +271,11 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
   }
 
   function simRent(s){
-    var p=S.rent,infl=s.infl/100,rinc=p.rinc/100,cum=0,yrs=[{y:0,net:0}];
+    var p=S.rent,infl=s.infl/100,rinc=p.rinc/100,cum=0,yrs=[{y:0,net:0,cash:p.rent*p.dep+p.sav}];
     for(var y=1;y<=s.years;y++){
       var rent=p.rent*12*Math.pow(1+rinc,y-1),ins=p.rins*12*Math.pow(1+infl,y-1),util=p.util*12*Math.pow(1+infl,y-1);
       var run=rent+ins+util;cum+=run;
-      yrs.push({y:y,rent:rent,ins:ins,util:util,run:run,net:cum,cumRun:cum});
+      yrs.push({y:y,cash:p.rent*p.dep+p.sav*Math.pow(1+s.inv/100,y),rent:rent,ins:ins,util:util,run:run,net:cum,cumRun:cum});
     }
     var y1=yrs[1];
     return {yrs:yrs,y1:y1,last:yrs[s.years],monthly:y1.run/12,cash:p.rent*p.dep,equity:0};
@@ -303,7 +308,7 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
     var mC=C.monthly,mH=H_.monthly,mR=R_.monthly;
     var opts=[{k:'condo',n:'Condo',net:C.last.net},{k:'house',n:'House',net:H_.last.net},{k:'rent',n:'Renting',net:R_.last.net}].sort(function(a,b){return a.net-b.net});
     $('verdict').innerHTML='<div class="big"><span class="swatch" style="background:var(--'+opts[0].k+')"></span>'+opts[0].n+' costs the least over '+F.yr(yrs)+'</div>'+
-      '<div class="sm">'+money(opts[1].net-opts[0].net)+' less than '+opts[1].n.toLowerCase()+' and '+money(opts[2].net-opts[0].net)+' less than '+opts[2].n.toLowerCase()+', after appreciation and selling costs. Owning builds equity of '+money(C.equity)+' (condo) or '+money(H_.equity)+' (house); renting builds none.</div>';
+      '<div class="sm">'+money(opts[1].net-opts[0].net)+' less than '+opts[1].n.toLowerCase()+' and '+money(opts[2].net-opts[0].net)+' less than '+opts[2].n.toLowerCase()+', after appreciation and selling costs. If you sold or moved out after '+F.yr(yrs)+', you would walk away with about '+money(C.equity)+' (condo), '+money(H_.equity)+' (house) or '+money(R_.last.cash)+' (rent, with savings invested).</div>';
 
     // tiles
     function tile(k,cv,hv,rv,note){
@@ -315,7 +320,7 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
       tile('Monthly cash out, year 1',money(mC),money(mH),money(mR),'Owning: loan payment, tax, insurance, HOA, upkeep and utilities.')+
       tile('Net cost over '+F.yr(yrs),money(C.last.net),money(H_.last.net),money(R_.last.net),'Owning is after appreciation and selling costs.')+
       tile('Cash needed up front',money(C.down+C.close),money(H_.down+H_.close),money(R_.cash),'Down payment plus closing costs, or the security deposit.')+
-      tile('Equity if sold after '+F.yr(yrs),money(C.equity),money(H_.equity),money(0),'Value minus loan balance minus selling costs.');
+      tile('Cash in hand after '+F.yr(yrs),money(C.equity),money(H_.equity),money(R_.last.cash),'Owning: sale price minus loan and selling costs. Renting: deposit back plus your invested savings.');
 
     // legend + bars
     $('legend').innerHTML=CATS.map(function(c){return '<span class="k"><i style="background:'+c.c+'"></i>'+c.label+'</span>'}).join('');
@@ -351,15 +356,16 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
     rows+=row('Loan balance at sale',money(C.last.bal),money(H_.last.bal),D);
     rows+=row('Running costs paid (excl. principal)',money(C.last.cumRun),money(H_.last.cumRun),money(R_.last.cumRun));
     rows+=row('Selling costs',money(C.last.sellC),money(H_.last.sellC),D);
-    rows+=row('Equity after selling',money(C.equity),money(H_.equity),money(0));
+    rows+=row('Cash in hand after selling or moving out',money(C.equity),money(H_.equity),money(R_.last.cash),true);
     rows+=row('Net cost',money(C.last.net),money(H_.last.net),money(R_.last.net),true);
     rows+=row('Net cost per month',money(C.last.net/(yrs*12)),money(H_.last.net/(yrs*12)),money(R_.last.net/(yrs*12)),true);
     $('tbl').innerHTML=rows;
   }
 
+  var metric='net';
   function chart(){
     var W=680,Hh=300,ml=58,mr=18,mt=14,mb=30,pw=W-ml-mr,ph=Hh-mt-mb,N=S.shared.years;
-    var vals=[];C.yrs.forEach(function(d){vals.push(d.net)});H_.yrs.forEach(function(d){vals.push(d.net)});R_.yrs.forEach(function(d){vals.push(d.net)});
+    var vals=[];C.yrs.forEach(function(d){vals.push(d[metric])});H_.yrs.forEach(function(d){vals.push(d[metric])});R_.yrs.forEach(function(d){vals.push(d[metric])});
     var tk=niceTicks(Math.min(0,Math.min.apply(null,vals)),Math.max.apply(null,vals),5);
     var lo=tk[0],hi=tk[tk.length-1];
     var X=function(y){return ml+(N===0?0:y/N*pw)},Y=function(v){return mt+(hi-v)/(hi-lo)*ph};
@@ -373,15 +379,15 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
     if(xt[xt.length-1]!==N&&N-xt[xt.length-1]>=stepX/2)xt.push(N);
     xt.forEach(function(y){g+='<text x="'+X(y)+'" y="'+(Hh-8)+'" text-anchor="middle">'+y+'</text>'});
     g+='<text x="'+(W-mr)+'" y="'+(Hh+4)+'" text-anchor="end" style="font-size:10px"></text>';
-    function path(R){return R.yrs.map(function(d,i){return (i?'L':'M')+X(d.y).toFixed(1)+' '+Y(d.net).toFixed(1)}).join(' ')}
+    function path(R){return R.yrs.map(function(d,i){return (i?'L':'M')+X(d.y).toFixed(1)+' '+Y(d[metric]).toFixed(1)}).join(' ')}
     function area(R){return path(R)+' L'+X(N)+' '+Y(Math.max(lo,0))+' L'+X(0)+' '+Y(Math.max(lo,0))+' Z'}
     g+='<path d="'+area(C)+'" fill="var(--condo)" opacity=".07"/><path d="'+area(H_)+'" fill="var(--house)" opacity=".07"/>';
     g+='<path d="'+path(C)+'" fill="none" stroke="var(--condo)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
     g+='<path d="'+path(H_)+'" fill="none" stroke="var(--house)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
     g+='<path d="'+path(R_)+'" fill="none" stroke="var(--rent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
-    g+='<circle cx="'+X(N)+'" cy="'+Y(R_.last.net)+'" r="4.5" fill="var(--rent)" stroke="var(--surface)" stroke-width="2"/>';
-    g+='<circle cx="'+X(N)+'" cy="'+Y(C.last.net)+'" r="4.5" fill="var(--condo)" stroke="var(--surface)" stroke-width="2"/>';
-    g+='<circle cx="'+X(N)+'" cy="'+Y(H_.last.net)+'" r="4.5" fill="var(--house)" stroke="var(--surface)" stroke-width="2"/>';
+    g+='<circle cx="'+X(N)+'" cy="'+Y(R_.last[metric])+'" r="4.5" fill="var(--rent)" stroke="var(--surface)" stroke-width="2"/>';
+    g+='<circle cx="'+X(N)+'" cy="'+Y(C.last[metric])+'" r="4.5" fill="var(--condo)" stroke="var(--surface)" stroke-width="2"/>';
+    g+='<circle cx="'+X(N)+'" cy="'+Y(H_.last[metric])+'" r="4.5" fill="var(--house)" stroke="var(--surface)" stroke-width="2"/>';
     g+='<line id="hx" y1="'+mt+'" y2="'+(mt+ph)+'" stroke="var(--muted)" stroke-width="1" style="display:none"/>';
     g+='<circle id="hc" r="5" fill="var(--condo)" stroke="var(--surface)" stroke-width="2" style="display:none"/>';
     g+='<circle id="hh" r="5" fill="var(--house)" stroke="var(--surface)" stroke-width="2" style="display:none"/>';
@@ -395,14 +401,14 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
       var y=Math.max(0,Math.min(N,Math.round((px-ml)/pw*N)));
       var c=C.yrs[y],h=H_.yrs[y],rr=R_.yrs[y],x=X(y);
       var hx=$('hx');hx.setAttribute('x1',x);hx.setAttribute('x2',x);hx.style.display='';
-      var hc=$('hc');hc.setAttribute('cx',x);hc.setAttribute('cy',Y(c.net));hc.style.display='';
-      var hh=$('hh');hh.setAttribute('cx',x);hh.setAttribute('cy',Y(h.net));hh.style.display='';
-      var hr=$('hr');hr.setAttribute('cx',x);hr.setAttribute('cy',Y(rr.net));hr.style.display='';
+      var hc=$('hc');hc.setAttribute('cx',x);hc.setAttribute('cy',Y(c[metric]));hc.style.display='';
+      var hh=$('hh');hh.setAttribute('cx',x);hh.setAttribute('cy',Y(h[metric]));hh.style.display='';
+      var hr=$('hr');hr.setAttribute('cx',x);hr.setAttribute('cy',Y(rr[metric]));hr.style.display='';
       var tip=$('tip');
       tip.innerHTML='<div class="t">'+(y===0?'Buy and sell right away':'Sell after year '+y)+'</div>'+
-        '<div class="r"><span><span class="swatch" style="background:var(--condo)"></span>Condo</span><span>'+money(c.net)+'</span></div>'+
-        '<div class="r"><span><span class="swatch" style="background:var(--house)"></span>House</span><span>'+money(h.net)+'</span></div>'+
-        '<div class="r"><span><span class="swatch" style="background:var(--rent)"></span>Rent</span><span>'+money(rr.net)+'</span></div>';
+        '<div class="r"><span><span class="swatch" style="background:var(--condo)"></span>Condo</span><span>'+money(c[metric])+'</span></div>'+
+        '<div class="r"><span><span class="swatch" style="background:var(--house)"></span>House</span><span>'+money(h[metric])+'</span></div>'+
+        '<div class="r"><span><span class="swatch" style="background:var(--rent)"></span>Rent</span><span>'+money(rr[metric])+'</span></div>';
       tip.style.display='';
       var boxW=$('chartbox').clientWidth,left=x/W*boxW,tw=tip.offsetWidth;
       tip.style.left=Math.max(0,Math.min(boxW-tw,left+12>boxW-tw?left-tw-12:left+12))+'px';
@@ -411,6 +417,18 @@ tr.em td{font-weight:600;border-bottom-color:var(--muted)}
     function leave(){['hx','hc','hh','hr','tip'].forEach(function(id){$(id).style.display='none'})}
     hit.addEventListener('pointermove',move);hit.addEventListener('pointerdown',move);hit.addEventListener('pointerleave',leave);
   }
+
+  function setMetric(m){
+    metric=m;
+    $('m-net').setAttribute('aria-pressed',m==='net');$('m-cash').setAttribute('aria-pressed',m==='cash');
+    $('chart-title').textContent=m==='net'?'Net cost, by year you sell':'Cash in hand, by year you sell';
+    $('chart-note').textContent=m==='net'
+      ?'Everything you spend that you do not get back. For owning that is interest, taxes, insurance, HOA, upkeep, utilities, closing and selling costs, and what your down payment could have earned elsewhere, minus appreciation. For renting it is rent, renters insurance and utilities. Hover or drag across the chart.'
+      :'What you would hold after selling and paying off the loan, or after moving out and getting your deposit back. Renting also counts the savings you set aside instead of making a down payment, growing at the return on cash. It does not count the difference in monthly payments. Hover or drag across the chart.';
+    chart();
+  }
+  $('m-net').addEventListener('click',function(){setMetric('net')});
+  $('m-cash').addEventListener('click',function(){setMetric('cash')});
 
   build('condo',homeFields,'g-condo');build('house',homeFields,'g-house');build('rent',rentFields,'g-rent');build('shared',sharedFields,'g-shared');
   bind('condo',homeFields);bind('house',homeFields);bind('rent',rentFields);bind('shared',sharedFields);
