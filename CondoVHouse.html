@@ -1,0 +1,422 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Condo vs House</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f3f5f8;--surface:#ffffff;--ink:#141d2b;--ink2:#48546a;--muted:#75819a;--line:#dde2ea;--track:#e6eaf0;
+  --condo:#2a62d8;--house:#d0640d;--condo-soft:#e7eefc;--house-soft:#fbeee2;
+  --c-prin:#9aa7ba;--c-int:#3a6ed6;--c-tax:#c2416a;--c-ins:#d69618;--c-hoa:#1a9985;--c-maint:#8a5a3c;--c-util:#79893a;
+  --good:#17784a;
+  --rent:#7a4cc4;--c-rent:#7a4cc4;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0e141c;--surface:#161e29;--ink:#e8edf4;--ink2:#aab5c6;--muted:#8794a8;--line:#28334a;--track:#233043;
+    --condo:#6c9cff;--house:#f2924a;--condo-soft:#1b2a47;--house-soft:#3a2716;
+    --c-prin:#6a7a90;--c-int:#6c9cff;--c-tax:#e2729b;--c-ins:#ebb646;--c-hoa:#46c3af;--c-maint:#b98460;--c-util:#a4b65b;
+    --good:#4cc38a;
+    --rent:#b394f5;--c-rent:#b394f5;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e141c;--surface:#161e29;--ink:#e8edf4;--ink2:#aab5c6;--muted:#8794a8;--line:#28334a;--track:#233043;
+  --condo:#6c9cff;--house:#f2924a;--condo-soft:#1b2a47;--house-soft:#3a2716;
+  --c-prin:#6a7a90;--c-int:#6c9cff;--c-tax:#e2729b;--c-ins:#ebb646;--c-hoa:#46c3af;--c-maint:#b98460;--c-util:#a4b65b;
+  --good:#4cc38a;
+  --rent:#b394f5;--c-rent:#b394f5;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;padding-inline:16px}
+.wrap{max-width:1180px;margin:0 auto;padding-block:24px 48px}
+h1{font-size:26px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px;text-wrap:balance}
+.sub{color:var(--ink2);margin:0;max-width:64ch}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:6px 12px;cursor:pointer}
+button:hover{border-color:var(--muted)}
+:focus-visible{outline:2px solid var(--condo);outline-offset:2px}
+
+.verdict{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 10px rgba(10,20,40,.06)}
+.verdict .big{font-size:17px;font-weight:600;text-wrap:balance;flex:1 1 280px}
+.verdict .sm{color:var(--ink2);font-size:13px;flex:1 1 220px}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+
+.layout{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:920px){.layout{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.panel h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin:0 0 12px;color:var(--ink2);display:flex;align-items:center;gap:8px}
+.panel.condo h2{color:var(--condo)}
+.panel.house h2{color:var(--house)}
+.panel.condo{accent-color:var(--condo)}
+.panel.house{accent-color:var(--house)}
+.panel.rent h2{color:var(--rent)}
+.panel.rent{accent-color:var(--rent)}
+.panel.shared{accent-color:var(--ink2)}
+.field{margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink2);margin-bottom:2px}
+.field output{font-family:var(--mono);font-size:13px;color:var(--ink);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;margin:0;height:22px}
+select{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.field.row{display:flex;justify-content:space-between;align-items:center}
+
+.tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:560px){.tiles{grid-template-columns:minmax(0,1fr)}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.tile .k{font-size:12px;color:var(--ink2);margin-bottom:8px;display:block}
+.tile .pair{display:flex;gap:16px;flex-wrap:wrap}
+.tile .v{font-family:var(--mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.tile .who{font-size:11px;color:var(--muted);display:block;margin-bottom:2px}
+.tile .v.condo{color:var(--ink)}
+.tile .tag{font-size:11px;color:var(--good);font-weight:600}
+
+.card-title{font-size:15px;font-weight:600;margin:0 0 2px}
+.card-note{color:var(--ink2);font-size:13px;margin:0 0 14px;max-width:70ch}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--ink2);margin-bottom:12px}
+.legend span.k{display:inline-flex;align-items:center;gap:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px}
+
+.bars{display:flex;flex-direction:column;gap:14px}
+.bar-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.bar-head b{font-weight:600}
+.bar-head .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.bar{display:flex;gap:2px;height:26px}
+.bar .seg{height:100%;min-width:0;border-radius:2px}
+.bar .seg:first-child{border-radius:4px 2px 2px 4px}
+.bar .seg:last-child{border-radius:2px 4px 4px 2px}
+
+.chartbox{position:relative}
+svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 4px 14px rgba(10,20,40,.14);min-width:170px;z-index:3}
+.tip .t{color:var(--ink2);margin-bottom:4px}
+.tip .r{display:flex;justify-content:space-between;gap:12px}
+.tip .r span:last-child{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:460px}
+th,td{padding:7px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;font-size:12px;color:var(--ink2)}
+td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--sans)}
+tr.em td{font-weight:600;border-bottom-color:var(--muted)}
+.foot{color:var(--muted);font-size:12px;margin-top:16px;max-width:80ch}
+.results{display:flex;flex-direction:column;gap:16px;min-width:0}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Condo vs House</h1>
+      <p class="sub">Move the sliders to compare owning a condo, owning a house, and renting. The starting numbers are examples; replace them with the listings you are comparing.</p>
+    </div>
+    <button id="reset" type="button">Reset to examples</button>
+  </header>
+
+  <div class="verdict" id="verdict" aria-live="polite"></div>
+
+  <div class="layout">
+    <div class="col" id="controls">
+      <section class="panel condo"><h2><span class="swatch" style="background:var(--condo);margin:0"></span>Condo</h2><div id="g-condo"></div></section>
+      <section class="panel house"><h2><span class="swatch" style="background:var(--house);margin:0"></span>Single-family house</h2><div id="g-house"></div></section>
+      <section class="panel rent"><h2><span class="swatch" style="background:var(--rent);margin:0"></span>Renting instead</h2><div id="g-rent"></div></section>
+      <section class="panel shared"><h2>Shared assumptions</h2><div id="g-shared"></div></section>
+    </div>
+
+    <div class="results">
+      <div class="tiles" id="tiles"></div>
+
+      <section class="panel">
+        <h3 class="card-title">Where the first year's monthly money goes</h3>
+        <p class="card-note">Principal is not a cost in the same sense as the rest. It builds equity you get back when you sell.</p>
+        <div class="legend" id="legend"></div>
+        <div class="bars" id="bars"></div>
+      </section>
+
+      <section class="panel">
+        <h3 class="card-title">Net cost of owning, by year you sell</h3>
+        <p class="card-note">Everything you spend that you do not get back. For owning that is interest, taxes, insurance, HOA, upkeep, utilities, closing and selling costs, and what your down payment could have earned elsewhere, minus appreciation. For renting it is rent, renters insurance and utilities. Hover or drag across the chart.</p>
+        <div class="legend"><span class="k"><i style="background:var(--condo)"></i>Condo</span><span class="k"><i style="background:var(--house)"></i>House</span><span class="k"><i style="background:var(--rent)"></i>Rent</span></div>
+        <div class="chartbox" id="chartbox"></div>
+      </section>
+
+      <section class="panel">
+        <h3 class="card-title" id="tbl-title">Side by side</h3>
+        <div class="scroll"><table id="tbl"></table></div>
+      </section>
+    </div>
+  </div>
+
+  <p class="foot">A planning estimate, not advice. It assumes a fixed-rate loan, private mortgage insurance at 0.5% of the loan per year until the balance falls to 80% of the purchase price, and property tax, maintenance and appreciation applied to the home's current value. Insurance, HOA dues and utilities rise with the inflation setting. Renting is charged only for rent, renters insurance and utilities, and is assumed to have the same down payment cash invested elsewhere, which the owning columns already account for. No tax deductions are included.</p>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var money=function(v){var s=Math.round(Math.abs(v)).toLocaleString('en-US');return (v<0?'-$':'$')+s};
+  var compact=function(v){var a=Math.abs(v),s=v<0?'-':'';if(a>=1e6)return s+'$'+(a/1e6).toFixed(a%1e6===0?0:2).replace(/0+$/,'').replace(/\.$/,'')+'M';if(a>=1e3)return s+'$'+Math.round(a/1e3)+'k';return s+'$'+Math.round(a)};
+  var F={
+    usd:money,
+    pct:function(v){return (+v.toFixed(3))+'%'},
+    yr:function(v){return v+(v===1?' year':' years')},
+    mo:function(v){return v+(v===1?' month':' months')}
+  };
+
+  var homeFields=[
+    {k:'price',label:'Purchase price',min:150000,max:2000000,step:5000,fmt:'usd'},
+    {k:'down',label:'Down payment',min:3,max:50,step:1,fmt:'pct'},
+    {k:'tax',label:'Property tax (per year)',min:0.2,max:2.5,step:0.05,fmt:'pct'},
+    {k:'ins',label:'Home insurance (per year)',min:300,max:6000,step:50,fmt:'usd'},
+    {k:'hoa',label:'HOA dues (per month)',min:0,max:1500,step:10,fmt:'usd'},
+    {k:'maint',label:'Maintenance (% of value per year)',min:0,max:3,step:0.1,fmt:'pct'},
+    {k:'util',label:'Utilities (per month)',min:0,max:800,step:10,fmt:'usd'},
+    {k:'appr',label:'Appreciation (per year)',min:-2,max:8,step:0.25,fmt:'pct'}
+  ];
+  var rentFields=[
+    {k:'rent',label:'Monthly rent',min:500,max:6000,step:50,fmt:'usd'},
+    {k:'rinc',label:'Rent increase (per year)',min:0,max:10,step:0.25,fmt:'pct'},
+    {k:'rins',label:'Renters insurance (per month)',min:0,max:100,step:5,fmt:'usd'},
+    {k:'util',label:'Utilities (per month)',min:0,max:600,step:10,fmt:'usd'},
+    {k:'dep',label:'Security deposit',min:0,max:3,step:1,fmt:'mo'}
+  ];
+  var sharedFields=[
+    {k:'rate',label:'Mortgage rate',min:2,max:10,step:0.125,fmt:'pct'},
+    {k:'term',label:'Loan term',type:'select',opts:[15,20,30]},
+    {k:'years',label:'Years you stay',min:1,max:30,step:1,fmt:'yr'},
+    {k:'close',label:'Closing costs when buying',min:0,max:6,step:0.25,fmt:'pct'},
+    {k:'sell',label:'Selling costs',min:0,max:9,step:0.25,fmt:'pct'},
+    {k:'inv',label:'Return on cash if not spent on the down payment',min:0,max:10,step:0.25,fmt:'pct'},
+    {k:'infl',label:'Inflation on insurance, HOA and utilities',min:0,max:8,step:0.25,fmt:'pct'}
+  ];
+  var DEF={
+    condo:{price:550000,down:20,tax:0.6,ins:900,hoa:450,maint:0.5,util:200,appr:3},
+    house:{price:850000,down:20,tax:0.6,ins:2200,hoa:0,maint:1.0,util:380,appr:3.5},
+    rent:{rent:2800,rinc:3.5,rins:25,util:180,dep:1},
+    shared:{rate:6.5,term:30,years:10,close:3,sell:6,inv:4,infl:3}
+  };
+  var S={condo:{},house:{},rent:{},shared:{}};
+
+  function build(group,fields,host){
+    var h='';
+    fields.forEach(function(f){
+      var id=group+'-'+f.k;
+      if(f.type==='select'){
+        h+='<div class="field row"><label for="'+id+'" style="margin:0">'+f.label+'</label><select id="'+id+'">'+f.opts.map(function(o){return '<option value="'+o+'">'+o+' years</option>'}).join('')+'</select></div>';
+      }else{
+        h+='<div class="field"><label for="'+id+'"><span>'+f.label+'</span><output id="'+id+'-o"></output></label><input type="range" id="'+id+'" min="'+f.min+'" max="'+f.max+'" step="'+f.step+'"></div>';
+      }
+    });
+    $(host).innerHTML=h;
+  }
+  function sync(group,fields){
+    fields.forEach(function(f){
+      var el=$(group+'-'+f.k);el.value=S[group][f.k];
+      if(f.type!=='select')$(group+'-'+f.k+'-o').textContent=F[f.fmt](+S[group][f.k]);
+    });
+  }
+  function bind(group,fields){
+    fields.forEach(function(f){
+      $(group+'-'+f.k).addEventListener('input',function(e){
+        S[group][f.k]=parseFloat(e.target.value);
+        if(f.type!=='select')$(group+'-'+f.k+'-o').textContent=F[f.fmt](S[group][f.k]);
+        render();
+      });
+    });
+  }
+  function reset(){
+    ['condo','house','rent','shared'].forEach(function(g){S[g]=JSON.parse(JSON.stringify(DEF[g]))});
+    sync('condo',homeFields);sync('house',homeFields);sync('rent',rentFields);sync('shared',sharedFields);
+    render();
+  }
+
+  function sim(p,s){
+    var H=s.years,price=p.price,down=price*p.down/100,loan=price-down;
+    var r=s.rate/1200,n=s.term*12;
+    var pay=loan<=0?0:(r===0?loan/n:loan*r/(1-Math.pow(1+r,-n)));
+    var bal=loan,infl=s.infl/100,app=p.appr/100,cumRun=0,close=s.close/100*price;
+    var yrs=[{y:0,net:close+s.sell/100*price}];
+    for(var y=1;y<=H;y++){
+      var valStart=price*Math.pow(1+app,y-1),valEnd=price*Math.pow(1+app,y),f=Math.pow(1+infl,y-1);
+      var int=0,prin=0,pmi=0;
+      for(var m=0;m<12;m++){
+        var b0=bal;
+        if(b0>0.000001){
+          var mi=b0*r,pr=Math.min(b0,pay-mi);
+          int+=mi;prin+=pr;bal=b0-pr;
+          if(b0>0.8*price+1)pmi+=loan*0.005/12;
+        }
+      }
+      var tax=p.tax/100*valStart,ins=p.ins*f,hoa=p.hoa*12*f,maint=p.maint/100*valStart,util=p.util*12*f;
+      var run=int+tax+ins+pmi+hoa+maint+util;
+      cumRun+=run;
+      var sellC=s.sell/100*valEnd,opp=down*(Math.pow(1+s.inv/100,y)-1);
+      var net=cumRun+close+sellC-(valEnd-price)+opp;
+      yrs.push({y:y,int:int,prin:prin,tax:tax,ins:ins+pmi,hoa:hoa,maint:maint,util:util,run:run,net:net,bal:bal,valEnd:valEnd,sellC:sellC,cumRun:cumRun,opp:opp});
+    }
+    var y1=yrs[1],last=yrs[H];
+    return {down:down,loan:loan,pay:pay,close:close,yrs:yrs,y1:y1,last:last,
+      monthly:(y1.run+y1.prin)/12,
+      equity:last.valEnd-last.bal-last.sellC};
+  }
+
+  function simRent(s){
+    var p=S.rent,infl=s.infl/100,rinc=p.rinc/100,cum=0,yrs=[{y:0,net:0}];
+    for(var y=1;y<=s.years;y++){
+      var rent=p.rent*12*Math.pow(1+rinc,y-1),ins=p.rins*12*Math.pow(1+infl,y-1),util=p.util*12*Math.pow(1+infl,y-1);
+      var run=rent+ins+util;cum+=run;
+      yrs.push({y:y,rent:rent,ins:ins,util:util,run:run,net:cum,cumRun:cum});
+    }
+    var y1=yrs[1];
+    return {yrs:yrs,y1:y1,last:yrs[s.years],monthly:y1.run/12,cash:p.rent*p.dep,equity:0};
+  }
+
+  var CATS=[
+    {k:'rent',label:'Rent',c:'var(--c-rent)'},
+    {k:'prin',label:'Principal',c:'var(--c-prin)'},
+    {k:'int',label:'Interest',c:'var(--c-int)'},
+    {k:'tax',label:'Property tax',c:'var(--c-tax)'},
+    {k:'ins',label:'Insurance and PMI',c:'var(--c-ins)'},
+    {k:'hoa',label:'HOA',c:'var(--c-hoa)'},
+    {k:'maint',label:'Maintenance',c:'var(--c-maint)'},
+    {k:'util',label:'Utilities',c:'var(--c-util)'}
+  ];
+
+  function niceTicks(lo,hi,cnt){
+    var span=(hi-lo)||1,raw=span/cnt,mag=Math.pow(10,Math.floor(Math.log10(raw)));
+    var st=[1,2,2.5,5,10].map(function(x){return x*mag}).filter(function(x){return x>=raw})[0];
+    var a=Math.floor(lo/st)*st,b=Math.ceil(hi/st)*st,t=[];
+    for(var v=a;v<=b+st/2;v+=st)t.push(Math.round(v*100)/100);
+    return t;
+  }
+
+  var C,H_,R_,cur;
+  function render(){
+    var s=S.shared;
+    C=sim(S.condo,s);H_=sim(S.house,s);R_=simRent(s);
+    var yrs=s.years;
+    var mC=C.monthly,mH=H_.monthly,mR=R_.monthly;
+    var opts=[{k:'condo',n:'Condo',net:C.last.net},{k:'house',n:'House',net:H_.last.net},{k:'rent',n:'Renting',net:R_.last.net}].sort(function(a,b){return a.net-b.net});
+    $('verdict').innerHTML='<div class="big"><span class="swatch" style="background:var(--'+opts[0].k+')"></span>'+opts[0].n+' costs the least over '+F.yr(yrs)+'</div>'+
+      '<div class="sm">'+money(opts[1].net-opts[0].net)+' less than '+opts[1].n.toLowerCase()+' and '+money(opts[2].net-opts[0].net)+' less than '+opts[2].n.toLowerCase()+', after appreciation and selling costs. Owning builds equity of '+money(C.equity)+' (condo) or '+money(H_.equity)+' (house); renting builds none.</div>';
+
+    // tiles
+    function tile(k,cv,hv,rv,note){
+      function one(n,c,v){return '<div><span class="who"><span class="swatch" style="background:var(--'+c+')"></span>'+n+'</span><span class="v">'+v+'</span></div>'}
+      return '<div class="tile"><span class="k">'+k+'</span><div class="pair">'+one('Condo','condo',cv)+one('House','house',hv)+one('Rent','rent',rv)+'</div>'+
+        (note?'<div style="margin-top:8px;font-size:12px;color:var(--ink2)">'+note+'</div>':'')+'</div>';
+    }
+    $('tiles').innerHTML=
+      tile('Monthly cash out, year 1',money(mC),money(mH),money(mR),'Owning: loan payment, tax, insurance, HOA, upkeep and utilities.')+
+      tile('Net cost over '+F.yr(yrs),money(C.last.net),money(H_.last.net),money(R_.last.net),'Owning is after appreciation and selling costs.')+
+      tile('Cash needed up front',money(C.down+C.close),money(H_.down+H_.close),money(R_.cash),'Down payment plus closing costs, or the security deposit.')+
+      tile('Equity if sold after '+F.yr(yrs),money(C.equity),money(H_.equity),money(0),'Value minus loan balance minus selling costs.');
+
+    // legend + bars
+    $('legend').innerHTML=CATS.map(function(c){return '<span class="k"><i style="background:'+c.c+'"></i>'+c.label+'</span>'}).join('');
+    var maxT=Math.max(C.monthly,H_.monthly,R_.monthly)||1;
+    function bar(name,color,R){
+      var tot=R.monthly,segs=CATS.map(function(c){
+        var v=(R.y1[c.k]||0)/12;
+        if(v<=0)return '';
+        return '<div class="seg" title="'+c.label+': '+money(v)+' a month" style="background:'+c.c+';flex:'+v+' 1 0"></div>';
+      }).join('');
+      return '<div><div class="bar-head"><b><span class="swatch" style="background:'+color+'"></span>'+name+'</b><span class="num">'+money(tot)+' / mo</span></div>'+
+        '<div style="width:'+(tot/maxT*100)+'%;min-width:40px"><div class="bar">'+segs+'</div></div></div>';
+    }
+    $('bars').innerHTML=bar('Condo','var(--condo)',C)+bar('House','var(--house)',H_)+bar('Rent','var(--rent)',R_);
+
+    chart();
+    table();
+  }
+
+  function table(){
+    var s=S.shared,yrs=s.years;
+    $('tbl-title').textContent='Side by side, after '+F.yr(yrs);
+    function row(l,a,b,c,em){return '<tr'+(em?' class="em"':'')+'><td>'+l+'</td><td>'+a+'</td><td>'+b+'</td><td>'+c+'</td></tr>'}
+    var D='—';
+    var rows='<tr><th></th><th style="color:var(--condo)">Condo</th><th style="color:var(--house)">House</th><th style="color:var(--rent)">Rent</th></tr>';
+    rows+=row('Purchase price',money(S.condo.price),money(S.house.price),D);
+    rows+=row('Down payment or deposit',money(C.down),money(H_.down),money(R_.cash));
+    rows+=row('Loan amount',money(C.loan),money(H_.loan),D);
+    rows+=row('Loan payment (principal + interest)',money(C.pay)+'/mo',money(H_.pay)+'/mo',D);
+    rows+=row('HOA dues or rent, year 1',money(S.condo.hoa)+'/mo',money(S.house.hoa)+'/mo',money(S.rent.rent)+'/mo');
+    rows+=row('Monthly cash out, year 1',money(C.monthly),money(H_.monthly),money(R_.monthly));
+    rows+=row('Home value at sale',money(C.last.valEnd),money(H_.last.valEnd),D);
+    rows+=row('Loan balance at sale',money(C.last.bal),money(H_.last.bal),D);
+    rows+=row('Running costs paid (excl. principal)',money(C.last.cumRun),money(H_.last.cumRun),money(R_.last.cumRun));
+    rows+=row('Selling costs',money(C.last.sellC),money(H_.last.sellC),D);
+    rows+=row('Equity after selling',money(C.equity),money(H_.equity),money(0));
+    rows+=row('Net cost',money(C.last.net),money(H_.last.net),money(R_.last.net),true);
+    rows+=row('Net cost per month',money(C.last.net/(yrs*12)),money(H_.last.net/(yrs*12)),money(R_.last.net/(yrs*12)),true);
+    $('tbl').innerHTML=rows;
+  }
+
+  function chart(){
+    var W=680,Hh=300,ml=58,mr=18,mt=14,mb=30,pw=W-ml-mr,ph=Hh-mt-mb,N=S.shared.years;
+    var vals=[];C.yrs.forEach(function(d){vals.push(d.net)});H_.yrs.forEach(function(d){vals.push(d.net)});R_.yrs.forEach(function(d){vals.push(d.net)});
+    var tk=niceTicks(Math.min(0,Math.min.apply(null,vals)),Math.max.apply(null,vals),5);
+    var lo=tk[0],hi=tk[tk.length-1];
+    var X=function(y){return ml+(N===0?0:y/N*pw)},Y=function(v){return mt+(hi-v)/(hi-lo)*ph};
+    var g='';
+    tk.forEach(function(t){
+      g+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+Y(t)+'" y2="'+Y(t)+'" stroke="var(--line)" stroke-width="1"'+(t===0?'':' stroke-dasharray="2 4"')+'/>';
+      g+='<text x="'+(ml-8)+'" y="'+(Y(t)+4)+'" text-anchor="end">'+compact(t)+'</text>';
+    });
+    var xt=[],stepX=N<=10?1:(N<=20?2:5);
+    for(var y=0;y<=N;y+=stepX)xt.push(y);
+    if(xt[xt.length-1]!==N&&N-xt[xt.length-1]>=stepX/2)xt.push(N);
+    xt.forEach(function(y){g+='<text x="'+X(y)+'" y="'+(Hh-8)+'" text-anchor="middle">'+y+'</text>'});
+    g+='<text x="'+(W-mr)+'" y="'+(Hh+4)+'" text-anchor="end" style="font-size:10px"></text>';
+    function path(R){return R.yrs.map(function(d,i){return (i?'L':'M')+X(d.y).toFixed(1)+' '+Y(d.net).toFixed(1)}).join(' ')}
+    function area(R){return path(R)+' L'+X(N)+' '+Y(Math.max(lo,0))+' L'+X(0)+' '+Y(Math.max(lo,0))+' Z'}
+    g+='<path d="'+area(C)+'" fill="var(--condo)" opacity=".07"/><path d="'+area(H_)+'" fill="var(--house)" opacity=".07"/>';
+    g+='<path d="'+path(C)+'" fill="none" stroke="var(--condo)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    g+='<path d="'+path(H_)+'" fill="none" stroke="var(--house)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    g+='<path d="'+path(R_)+'" fill="none" stroke="var(--rent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    g+='<circle cx="'+X(N)+'" cy="'+Y(R_.last.net)+'" r="4.5" fill="var(--rent)" stroke="var(--surface)" stroke-width="2"/>';
+    g+='<circle cx="'+X(N)+'" cy="'+Y(C.last.net)+'" r="4.5" fill="var(--condo)" stroke="var(--surface)" stroke-width="2"/>';
+    g+='<circle cx="'+X(N)+'" cy="'+Y(H_.last.net)+'" r="4.5" fill="var(--house)" stroke="var(--surface)" stroke-width="2"/>';
+    g+='<line id="hx" y1="'+mt+'" y2="'+(mt+ph)+'" stroke="var(--muted)" stroke-width="1" style="display:none"/>';
+    g+='<circle id="hc" r="5" fill="var(--condo)" stroke="var(--surface)" stroke-width="2" style="display:none"/>';
+    g+='<circle id="hh" r="5" fill="var(--house)" stroke="var(--surface)" stroke-width="2" style="display:none"/>';
+    g+='<circle id="hr" r="5" fill="var(--rent)" stroke="var(--surface)" stroke-width="2" style="display:none"/>';
+    g+='<rect id="hit" x="'+ml+'" y="'+mt+'" width="'+pw+'" height="'+ph+'" fill="transparent" style="cursor:crosshair;touch-action:pan-y"/>';
+    $('chartbox').innerHTML='<svg viewBox="0 0 '+W+' '+Hh+'" role="img" aria-label="Net cost of owning a condo versus a house by year of sale">'+g+'</svg><div class="tip" id="tip" style="display:none"></div>';
+
+    var svg=$('chartbox').querySelector('svg'),hit=$('hit');
+    function move(e){
+      var r=svg.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W;
+      var y=Math.max(0,Math.min(N,Math.round((px-ml)/pw*N)));
+      var c=C.yrs[y],h=H_.yrs[y],rr=R_.yrs[y],x=X(y);
+      var hx=$('hx');hx.setAttribute('x1',x);hx.setAttribute('x2',x);hx.style.display='';
+      var hc=$('hc');hc.setAttribute('cx',x);hc.setAttribute('cy',Y(c.net));hc.style.display='';
+      var hh=$('hh');hh.setAttribute('cx',x);hh.setAttribute('cy',Y(h.net));hh.style.display='';
+      var hr=$('hr');hr.setAttribute('cx',x);hr.setAttribute('cy',Y(rr.net));hr.style.display='';
+      var tip=$('tip');
+      tip.innerHTML='<div class="t">'+(y===0?'Buy and sell right away':'Sell after year '+y)+'</div>'+
+        '<div class="r"><span><span class="swatch" style="background:var(--condo)"></span>Condo</span><span>'+money(c.net)+'</span></div>'+
+        '<div class="r"><span><span class="swatch" style="background:var(--house)"></span>House</span><span>'+money(h.net)+'</span></div>'+
+        '<div class="r"><span><span class="swatch" style="background:var(--rent)"></span>Rent</span><span>'+money(rr.net)+'</span></div>';
+      tip.style.display='';
+      var boxW=$('chartbox').clientWidth,left=x/W*boxW,tw=tip.offsetWidth;
+      tip.style.left=Math.max(0,Math.min(boxW-tw,left+12>boxW-tw?left-tw-12:left+12))+'px';
+      tip.style.top='8px';
+    }
+    function leave(){['hx','hc','hh','hr','tip'].forEach(function(id){$(id).style.display='none'})}
+    hit.addEventListener('pointermove',move);hit.addEventListener('pointerdown',move);hit.addEventListener('pointerleave',leave);
+  }
+
+  build('condo',homeFields,'g-condo');build('house',homeFields,'g-house');build('rent',rentFields,'g-rent');build('shared',sharedFields,'g-shared');
+  bind('condo',homeFields);bind('house',homeFields);bind('rent',rentFields);bind('shared',sharedFields);
+  $('reset').addEventListener('click',reset);
+  reset();
+})();
+</script>
+
+</body></html>
